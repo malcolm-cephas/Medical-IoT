@@ -1,0 +1,20 @@
+Add files via upload
+
+Complete Medical IoT System with advanced security features:
+
+- Spring Boot backend with REST API
+- React frontend with real-time monitoring
+- Python analytics service for ABE encryption
+- Consent-based access control system
+- IPFS integration for decentralized storage
+- Blockchain audit logging
+- ECDH image encryption
+- Real-time patient vital monitoring (HR, SpO2, Temp, Humidity, BP)
+- Ward statistics dashboard
+- Browser notifications for critical alerts
+- CSV data export functionality
+- Mobile-responsive design
+- Dark/Light theme support
+
+Tech Stack: Spring Boot, React, Python, MySQL, FastAPI, Chart.js
+Security: ABE, ECDH, IPFS, Blockchain
