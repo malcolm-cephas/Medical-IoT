@@ -240,6 +240,8 @@ This project is for educational purposes only.
 
 **Malcolm Cephas**
 - GitHub: [@malcolm-cephas](https://github.com/malcolm-cephas)
+**Shalini Sinha**
+- GitHub: [@Shalini-git-hub](https://github.com/Shalini-git-hub)
 
 ## 🙏 Acknowledgments
 
