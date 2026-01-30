@@ -49,10 +49,20 @@ Set-Location $PROJECT_DIR
 Write-Host ""
 Write-Host "[3/6] Initializing Git repository..." -ForegroundColor Yellow
 if (-not (Test-Path ".git")) {
-    git init
-    Write-Host "Git repository initialized!" -ForegroundColor Green
-} else {
+    git init -b main
+    Write-Host "Git repository initialized with 'main' branch!" -ForegroundColor Green
+}
+else {
     Write-Host "Git repository already exists!" -ForegroundColor Green
+    # Ensure we're on main branch
+    $currentBranch = git branch --show-current
+    if ($currentBranch -ne "main") {
+        git checkout -b main 2>$null
+        if ($LASTEXITCODE -ne 0) {
+            git branch -M main
+        }
+        Write-Host "Switched to 'main' branch!" -ForegroundColor Green
+    }
 }
 
 # Configure Git user (if not configured)
@@ -63,7 +73,8 @@ if (-not $userName) {
     git config user.name "Malcolm Cephas"
     git config user.email "malcolm.cephas@example.com"
     Write-Host "Git user configured!" -ForegroundColor Green
-} else {
+}
+else {
     Write-Host "Git already configured for: $userName" -ForegroundColor Green
 }
 
@@ -74,8 +85,11 @@ $existingRemote = git remote get-url origin 2>$null
 if (-not $existingRemote) {
     git remote add origin $REPO_URL
     Write-Host "Remote repository added!" -ForegroundColor Green
-} else {
+}
+else {
     Write-Host "Remote repository already configured!" -ForegroundColor Green
+    # Update remote URL in case it changed
+    git remote set-url origin $REPO_URL
 }
 
 # Stage all files
@@ -86,7 +100,13 @@ git add .
 # Show what will be committed
 Write-Host ""
 Write-Host "Files to be uploaded:" -ForegroundColor Cyan
-git status --short
+$statusOutput = git status --short
+if ($statusOutput) {
+    Write-Host $statusOutput
+}
+else {
+    Write-Host "No new files to upload (everything up to date)" -ForegroundColor Yellow
+}
 
 # Commit changes
 Write-Host ""
@@ -112,7 +132,12 @@ Complete Medical IoT System with advanced security features:
 Tech Stack: Spring Boot, React, Python, MySQL, FastAPI, Chart.js
 Security: ABE, ECDH, IPFS, Blockchain"
 
-Write-Host "Commit created successfully!" -ForegroundColor Green
+if ($LASTEXITCODE -eq 0) {
+    Write-Host "Commit created successfully!" -ForegroundColor Green
+}
+else {
+    Write-Host "No changes to commit or commit already exists" -ForegroundColor Yellow
+}
 
 # Push to GitHub
 Write-Host ""
@@ -138,6 +163,11 @@ $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 # Push to GitHub
 Write-Host ""
 Write-Host "Uploading to GitHub..." -ForegroundColor Yellow
+
+# Try to pull first if remote has content
+git pull origin main --allow-unrelated-histories 2>$null
+
+# Now push
 git push -u origin main
 
 if ($LASTEXITCODE -eq 0) {
@@ -148,7 +178,8 @@ if ($LASTEXITCODE -eq 0) {
     Write-Host ""
     Write-Host "View your repository at:" -ForegroundColor Cyan
     Write-Host "https://github.com/malcolm-cephas/Medical-IoT" -ForegroundColor White
-} else {
+}
+else {
     Write-Host ""
     Write-Host "Upload failed. Common issues:" -ForegroundColor Red
     Write-Host "  - Wrong credentials (use Personal Access Token)" -ForegroundColor Yellow
