@@ -61,7 +61,7 @@ Create the MySQL database:
 
 ```sql
 CREATE DATABASE medical_iot_db;
-CREATE USER 'root'@'localhost' IDENTIFIED BY 'malcolm';
+CREATE USER 'root'@'localhost' IDENTIFIED BY '*******';
 GRANT ALL PRIVILEGES ON medical_iot_db.* TO 'root'@'localhost';
 FLUSH PRIVILEGES;
 ```
@@ -243,6 +243,9 @@ This project is for educational purposes only.
   
 **Shalini Sinha**
 - GitHub: [@Shalini-git-hub](https://github.com/Shalini-git-hub)
+  
+**A B Vishvajeeth**
+- GitHub: 
 
 ## 🙏 Acknowledgments
 
