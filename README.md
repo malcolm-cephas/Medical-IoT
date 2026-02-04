@@ -245,7 +245,7 @@ This project is for educational purposes only.
 - GitHub: [@Shalini-git-hub](https://github.com/Shalini-git-hub)
   
 **A B Vishvajeeth**
-- GitHub: [@ABVishvajeeth] (https://github.com/ABVishvajeeth) 
+- GitHub: [@ABVishvajeeth](https://github.com/ABVishvajeeth) 
 
 ## 🙏 Acknowledgments
 
