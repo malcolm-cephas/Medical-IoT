@@ -134,27 +134,170 @@ stop_all.bat
 - Username: `patient_001` to `patient_035`
 - Password: `password`
 
-## 📊 System Architecture
+## 🏗️ System Architecture
 
+```mermaid
+graph TB
+    subgraph "Client Layer"
+        WEB[Web Browser<br/>React + Vite]
+        MOBILE[Mobile Device<br/>Responsive UI]
+    end
+
+    subgraph "Frontend - Port 5173"
+        DASHBOARD[Dashboard Component]
+        VITALS[Vitals Monitor]
+        CONSENT[Consent Management]
+        IMAGES[Image Transfer]
+        APPT[Appointments System]
+    end
+
+    subgraph "Backend - Port 8080"
+        API[Spring Boot REST API]
+        
+        subgraph "Controllers"
+            AUTH[Auth Controller]
+            SENSOR[Sensor Controller]
+            CONS[Consent Controller]
+            DOC[Doctor Controller]
+            PAT[Patient Controller]
+        end
+        
+        subgraph "Services"
+            USERSVC[User Service]
+            SENSVC[Sensor Service]
+            CONSVC[Consent Service]
+            DOCAVSVC[Availability Service]
+            APPTSVC[Appointment Service]
+            IPFSSVC[IPFS Service]
+            BLOCKSVC[Blockchain Service]
+            LOCKSVC[Lockdown Service]
+        end
+        
+        subgraph "Security"
+            SECCONF[Security Config]
+            ABE[ABE Encryption]
+            ECDH[ECDH Encryption]
+        end
+    end
+
+    subgraph "Analytics - Port 4242"
+        FASTAPI[FastAPI Service]
+        CHARM[Charm-Crypto ABE]
+        IMGPROC[Image Processing]
+    end
+
+    subgraph "Data Layer"
+        MYSQL[(MySQL Database<br/>medical_iot_db)]
+        IPFS[IPFS Storage<br/>Decentralized]
+        BLOCKCHAIN[Blockchain Ledger<br/>Audit Trail]
+    end
+
+    subgraph "Database Tables"
+        USERS[users]
+        SENSORS[sensor_data]
+        CONSENTS[consent_records]
+        SECURITY[security_events]
+        DOCAVAIL[doctor_availability]
+        APPOINTMENTS[appointments]
+    end
+
+    subgraph "External Systems"
+        WEBSOCKET[WebSocket<br/>Real-time Updates]
+        NOTIF[Browser Notifications]
+    end
+
+    %% Client to Frontend
+    WEB --> DASHBOARD
+    MOBILE --> DASHBOARD
+    
+    %% Frontend Components
+    DASHBOARD --> VITALS
+    DASHBOARD --> CONSENT
+    DASHBOARD --> IMAGES
+    DASHBOARD --> APPT
+    
+    %% Frontend to Backend
+    VITALS --> API
+    CONSENT --> API
+    IMAGES --> API
+    APPT --> API
+    
+    %% API to Controllers
+    API --> AUTH
+    API --> SENSOR
+    API --> CONS
+    API --> DOC
+    API --> PAT
+    
+    %% Controllers to Services
+    AUTH --> USERSVC
+    SENSOR --> SENSVC
+    CONS --> CONSVC
+    DOC --> DOCAVSVC
+    DOC --> APPTSVC
+    PAT --> APPTSVC
+    
+    %% Services to Security
+    SENSVC --> ABE
+    IMAGES -.-> ECDH
+    CONSVC --> BLOCKSVC
+    APPTSVC --> BLOCKSVC
+    
+    %% Services to Data
+    USERSVC --> MYSQL
+    SENSVC --> MYSQL
+    CONSVC --> MYSQL
+    DOCAVSVC --> MYSQL
+    APPTSVC --> MYSQL
+    LOCKSVC --> MYSQL
+    
+    %% Backend to Analytics
+    ABE --> FASTAPI
+    ECDH --> FASTAPI
+    FASTAPI --> CHARM
+    FASTAPI --> IMGPROC
+    
+    %% Services to External Storage
+    IPFSSVC --> IPFS
+    BLOCKSVC --> BLOCKCHAIN
+    
+    %% Database Tables
+    MYSQL --> USERS
+    MYSQL --> SENSORS
+    MYSQL --> CONSENTS
+    MYSQL --> SECURITY
+    MYSQL --> DOCAVAIL
+    MYSQL --> APPOINTMENTS
+    
+    %% Real-time Features
+    SENSVC -.-> WEBSOCKET
+    WEBSOCKET -.-> DASHBOARD
+    DASHBOARD -.-> NOTIF
+    
+    %% Styling
+    classDef frontend fill:#61dafb,stroke:#333,stroke-width:2px,color:#000
+    classDef backend fill:#6db33f,stroke:#333,stroke-width:2px,color:#fff
+    classDef analytics fill:#3776ab,stroke:#333,stroke-width:2px,color:#fff
+    classDef database fill:#00758f,stroke:#333,stroke-width:2px,color:#fff
+    classDef security fill:#ff6b6b,stroke:#333,stroke-width:2px,color:#fff
+    
+    class DASHBOARD,VITALS,CONSENT,IMAGES,APPT frontend
+    class API,AUTH,SENSOR,CONS,DOC,PAT,USERSVC,SENSVC,CONSVC,DOCAVSVC,APPTSVC backend
+    class FASTAPI,CHARM,IMGPROC analytics
+    class MYSQL,IPFS,BLOCKCHAIN,USERS,SENSORS,CONSENTS,SECURITY,DOCAVAIL,APPOINTMENTS database
+    class SECCONF,ABE,ECDH,IPFSSVC,BLOCKSVC,LOCKSVC security
 ```
-┌─────────────────┐
-│  React Frontend │ (Port 5173)
-└────────┬────────┘
-         │
-         ├─────────────────────────┐
-         │                         │
-┌────────▼────────┐      ┌─────────▼──────────┐
-│  Spring Boot    │◄────►│  Python Analytics  │
-│    Backend      │      │     Service        │
-│  (Port 8080)    │      │   (Port 4242)      │
-└────────┬────────┘      └────────────────────┘
-         │
-         ├──────────┬──────────┬──────────┐
-         │          │          │          │
-    ┌───▼───┐  ┌───▼───┐  ┌───▼───┐  ┌──▼──┐
-    │ MySQL │  │  ABE  │  │ IPFS  │  │ BC  │
-    └───────┘  └───────┘  └───────┘  └─────┘
-```
+
+### Key Components:
+
+- **Frontend (React)**: Multi-tab dashboard with real-time monitoring
+- **Backend (Spring Boot)**: RESTful API with comprehensive security
+- **Analytics (Python)**: ABE encryption and image processing
+- **Database (MySQL)**: Persistent storage for all entities
+- **IPFS**: Decentralized storage for encrypted records
+- **Blockchain**: Immutable audit trail for compliance
+
+
 
 ## 🔐 Security Features
 
