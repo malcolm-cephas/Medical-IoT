@@ -21,7 +21,7 @@ This document outlines the changes made to enable secure multi-device access for
   - `/topic/alerts`: Instant medical and security alerts across all authorized devices.
 
 ## Demonstration Output
-- **URL**: `http://LAPTOP-E115OE88:5173`
+- **URL**: `http://local:5173`
 - **Configuration**:
   - Backend: Listening on `0.0.0.0:8080`
   - Frontend: Listening on `0.0.0.0:5173`
