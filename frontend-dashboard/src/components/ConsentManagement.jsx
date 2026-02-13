@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { getBackendUrl } from '../config';
 
 const ConsentManagement = ({ patientId, theme }) => {
     const [requests, setRequests] = useState([]);
@@ -12,7 +13,7 @@ const ConsentManagement = ({ patientId, theme }) => {
     const fetchConsentRequests = async () => {
         setLoading(true);
         try {
-            const response = await axios.get(`http://localhost:8080/api/consent/patient/${patientId}`);
+            const response = await axios.get(`${getBackendUrl()}/api/consent/patient/${patientId}`);
             setRequests(response.data);
         } catch (error) {
             console.error("Error fetching consent requests", error);
@@ -23,7 +24,7 @@ const ConsentManagement = ({ patientId, theme }) => {
 
     const respondToRequest = async (consentId, status) => {
         try {
-            await axios.post('http://localhost:8080/api/consent/respond', {
+            await axios.post(`${getBackendUrl()}/api/consent/respond`, {
                 consentId: consentId.toString(),
                 status: status
             });

@@ -13,7 +13,6 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/consent")
-@CrossOrigin(origins = "http://localhost:5173")
 public class ConsentController {
 
     @Autowired

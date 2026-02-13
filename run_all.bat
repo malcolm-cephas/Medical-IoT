@@ -32,5 +32,16 @@ echo  - Backend:   http://localhost:8080
 echo  - Analytics: http://localhost:4242
 echo  - Validating: MySQL Connection (Check Backend Logs)
 echo ===================================================
+echo.
+echo NEW FEATURES AVAILABLE:
+echo  - Doctor-Patient Appointments (Click Appointments Tab)
+echo  - Doctors: Set availability and manage appointments
+echo  - Patients: Browse doctors and book appointments
+echo.
+echo QUICK START:
+echo  1. Login as doctor_micheal to set availability
+echo  2. Login as patient_alpha to book appointments
+echo  3. Check the Appointments tab in the dashboard
+echo ===================================================
 echo Press any key to exit this launcher (Services will keep running)...
 pause >nul

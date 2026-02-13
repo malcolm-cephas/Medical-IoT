@@ -5,13 +5,19 @@ import json
 from datetime import datetime
 from colorama import init, Fore, Style
 
+import socket
+
 # Initialize colorama
 init()
 
 # Configuration
-API_URL = "http://localhost:8080/api/sensor/upload"
+# Custom hostname for local network access
+# Change to your PC's IP or "localhost" if needed
+HOSTNAME = "localhost" 
+API_URL = f"http://{HOSTNAME}:8080/api/sensor/upload"
 NUM_PATIENTS = 35
-PATIENTS = [f"patient_{i:03d}" for i in range(1, NUM_PATIENTS + 1)]
+PATIENTS = [f"patient_{i:03d}" for i in range(1, NUM_PATIENTS + 1)] + \
+           ["patient_alpha", "patient_beta", "patient_gamma", "alpha", "beta", "gamma"]
 
 def generate_vitals(patient_id):
     """Generates realistic but random vitals."""
@@ -47,7 +53,8 @@ def generate_vitals(patient_id):
 
 def send_data(data):
     try:
-        response = requests.post(API_URL, json=data, timeout=2)
+        # Using Basic Auth (admin/password) to correspond with backend security
+        response = requests.post(API_URL, json=data, timeout=2, auth=('admin', 'password'))
         if response.status_code == 200:
             status_color = Fore.GREEN
             status_msg = "SUCCESS"

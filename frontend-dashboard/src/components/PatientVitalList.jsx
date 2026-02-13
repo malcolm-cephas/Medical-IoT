@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { getBackendUrl } from '../config';
+import SockJS from 'sockjs-client';
+import Stomp from 'stompjs';
 
 const PatientVitalList = ({ onSelectPatient, theme, currentUser }) => {
     const [patients, setPatients] = useState([]);
@@ -10,6 +13,28 @@ const PatientVitalList = ({ onSelectPatient, theme, currentUser }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [consentStatuses, setConsentStatuses] = useState({});
 
+    // WebSocket for real-time list updates
+    useEffect(() => {
+        const socket = new SockJS(`${getBackendUrl()}/ws-vitals`);
+        const stompClient = Stomp.over(socket);
+        stompClient.debug = null;
+
+        stompClient.connect({}, () => {
+            stompClient.subscribe('/topic/ward', (message) => {
+                const newData = JSON.parse(message.body);
+                setPatients(prev => prev.map(p =>
+                    p.username === newData.patientId
+                        ? { ...p, latestHeartRate: newData.heartRate, latestSpo2: newData.spo2 }
+                        : p
+                ));
+            });
+        });
+
+        return () => {
+            if (stompClient && stompClient.connected) stompClient.disconnect();
+        };
+    }, []);
+
     useEffect(() => {
         fetchPatients();
     }, [page, size, searchTerm]);
@@ -17,7 +42,7 @@ const PatientVitalList = ({ onSelectPatient, theme, currentUser }) => {
     const fetchPatients = async () => {
         setLoading(true);
         try {
-            const response = await axios.get(`http://localhost:8080/api/patients?page=${page}&size=${size}&search=${searchTerm}`);
+            const response = await axios.get(`${getBackendUrl()}/api/patients?page=${page}&size=${size}&search=${searchTerm}`);
             setPatients(response.data.patients);
             setTotalPages(response.data.totalPages);
 
@@ -26,7 +51,7 @@ const PatientVitalList = ({ onSelectPatient, theme, currentUser }) => {
                 const statuses = {};
                 for (const patient of response.data.patients) {
                     try {
-                        const consentRes = await axios.get(`http://localhost:8080/api/consent/check?patientId=${patient.username}&doctorId=${currentUser.username}`);
+                        const consentRes = await axios.get(`${getBackendUrl()}/api/consent/check?patientId=${patient.username}&doctorId=${currentUser.username}`);
                         statuses[patient.username] = consentRes.data.status;
                     } catch (err) {
                         statuses[patient.username] = 'NONE'; // No consent request exists
@@ -43,7 +68,7 @@ const PatientVitalList = ({ onSelectPatient, theme, currentUser }) => {
 
     const requestAccess = async (patientId) => {
         try {
-            await axios.post('http://localhost:8080/api/consent/request', {
+            await axios.post(`${getBackendUrl()}/api/consent/request`, {
                 patientId: patientId,
                 doctorId: currentUser.username
             });

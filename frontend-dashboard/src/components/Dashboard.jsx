@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import SockJS from 'sockjs-client';
+import Stomp from 'stompjs';
+import { getBackendUrl } from '../config';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -15,6 +18,8 @@ import SecureImageTransfer from './SecureImageTransfer';
 import PatientVitalList from './PatientVitalList';
 import ConsentManagement from './ConsentManagement';
 import PatientStatistics from './PatientStatistics';
+import AppointmentBooking from './AppointmentBooking';
+import DoctorAvailability from './DoctorAvailability';
 
 ChartJS.register(
   CategoryScale,
@@ -27,8 +32,9 @@ ChartJS.register(
 );
 
 const Dashboard = ({ user, theme, toggleTheme }) => {
-  const [patientId, setPatientId] = useState('123'); // Default 
+  const [patientId, setPatientId] = useState('patient_001'); // Default to first mock patient
   const [viewMode, setViewMode] = useState(user.role === 'patient' ? 'detail' : 'list');
+  const [activeTab, setActiveTab] = useState('vitals'); // vitals, consent, images, appointments
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isConnected, setIsConnected] = useState(false);
@@ -62,17 +68,15 @@ const Dashboard = ({ user, theme, toggleTheme }) => {
   // If role is patient, they can only see themselves
   useEffect(() => {
     if (user && user.role === 'patient') {
-      // In a real app, use the actual signed-in user's ID
-      // For demo, we might map 'patient_alpha' to '123' or just use the name
-      setPatientId(user.username === 'patient_alpha' ? '123' : user.username);
+      setPatientId(user.username);
     }
   }, [user]);
 
-  // Poll for data every 2 seconds
+  // Initial fetch and WebSocket connection
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get(`http://localhost:8080/api/sensor/history/${patientId}`);
+        const response = await axios.get(`${getBackendUrl()}/api/sensor/history/${patientId}`);
         setHistory(response.data);
         setLoading(false);
         setIsConnected(true);
@@ -82,10 +86,44 @@ const Dashboard = ({ user, theme, toggleTheme }) => {
       }
     };
 
-    fetchData(); // Initial call
-    const interval = setInterval(fetchData, 2000); // Polling
-    return () => clearInterval(interval);
-  }, [patientId]);
+    fetchData();
+
+    // WebSocket Setup
+    const socket = new SockJS(`${getBackendUrl()}/ws-vitals`);
+    const stompClient = Stomp.over(socket);
+    stompClient.debug = null;
+
+    stompClient.connect({}, (frame) => {
+      setIsConnected(true);
+
+      // Subscribe to this patient's vitals
+      stompClient.subscribe(`/topic/vitals/${patientId}`, (message) => {
+        const newData = JSON.parse(message.body);
+        setHistory(prev => [...prev, newData].slice(-50)); // Keep last 50 for trends
+      });
+
+      // Subscribe to security alerts/lockdown
+      stompClient.subscribe('/topic/alerts', (message) => {
+        const alert = JSON.parse(message.body);
+        if (alert.patientId === patientId || user.role !== 'patient') {
+          if (notificationsEnabled) {
+            new window.Notification("🚨 MEDICAL ALERT", {
+              body: `Patient ${alert.patientId}: ${alert.anomalies.join(', ')}`,
+            });
+          }
+        }
+      });
+    }, (error) => {
+      console.error("WebSocket Error:", error);
+      setIsConnected(false);
+    });
+
+    return () => {
+      if (stompClient && stompClient.connected) {
+        stompClient.disconnect();
+      }
+    };
+  }, [patientId, notificationsEnabled, user.role]);
 
   const handleLogout = () => {
     window.location.href = '/'; // Simple reload to clear state
@@ -108,22 +146,6 @@ const Dashboard = ({ user, theme, toggleTheme }) => {
         data: history.map(d => d.spo2),
         borderColor: '#38bdf8', // accent-color
         backgroundColor: 'rgba(56, 189, 248, 0.5)',
-        tension: 0.4,
-        yAxisID: 'y',
-      },
-      {
-        label: 'Temperature (°C)',
-        data: history.map(d => d.temperature),
-        borderColor: '#fb923c', // orange
-        backgroundColor: 'rgba(251, 146, 60, 0.5)',
-        tension: 0.4,
-        yAxisID: 'y1',
-      },
-      {
-        label: 'Humidity (%)',
-        data: history.map(d => d.humidity),
-        borderColor: '#a78bfa', // purple
-        backgroundColor: 'rgba(167, 139, 250, 0.5)',
         tension: 0.4,
         yAxisID: 'y',
       },
@@ -157,24 +179,10 @@ const Dashboard = ({ user, theme, toggleTheme }) => {
         position: 'left',
         title: {
           display: true,
-          text: 'HR / SpO2 / Humidity',
+          text: 'HR / SpO2',
           color: theme === 'dark' ? '#94a3b8' : '#1e293b'
         },
         grid: { color: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0,0,0,0.1)' },
-        ticks: { color: theme === 'dark' ? '#94a3b8' : '#1e293b' }
-      },
-      y1: {
-        type: 'linear',
-        display: true,
-        position: 'right',
-        title: {
-          display: true,
-          text: 'Temperature (°C)',
-          color: theme === 'dark' ? '#94a3b8' : '#1e293b'
-        },
-        grid: {
-          drawOnChartArea: false,
-        },
         ticks: { color: theme === 'dark' ? '#94a3b8' : '#1e293b' }
       }
     }
@@ -198,7 +206,7 @@ const Dashboard = ({ user, theme, toggleTheme }) => {
   useEffect(() => {
     const checkLockdown = async () => {
       try {
-        const response = await axios.get('http://localhost:8080/api/security/status');
+        const response = await axios.get(`${getBackendUrl()}/api/security/status`);
         setLockdown({
           active: response.data.isLockdown,
           reason: response.data.reason
@@ -214,7 +222,7 @@ const Dashboard = ({ user, theme, toggleTheme }) => {
   }, []);
 
   const handleExport = () => {
-    window.open('http://localhost:8080/api/export/logs/csv', '_blank');
+    window.open(`${getBackendUrl()}/api/export/logs/csv`, '_blank');
   };
 
   const exportPatientData = () => {
@@ -255,7 +263,7 @@ const Dashboard = ({ user, theme, toggleTheme }) => {
     const reason = prompt("🚨 BREAK-GLASS EMERGENCY 🚨\n\nPlease enter the medical reason for immediate access override:");
     if (reason) {
       try {
-        await axios.post('http://localhost:8080/api/emergency/override', {
+        await axios.post(`${getBackendUrl()}/api/emergency/override`, {
           doctorId: user.username,
           patientId: patientId,
           reason: reason
@@ -270,7 +278,7 @@ const Dashboard = ({ user, theme, toggleTheme }) => {
   const togglePerformance = async () => {
     if (!showPerf) {
       try {
-        const res = await axios.get('http://localhost:8080/api/performance/metrics');
+        const res = await axios.get(`${getBackendUrl()}/api/performance/metrics`);
         setPerfMetrics(res.data);
       } catch (e) { console.error(e); }
     }
@@ -423,180 +431,274 @@ const Dashboard = ({ user, theme, toggleTheme }) => {
           )}
         </div>
 
-        {/* Ward Monitoring List (Only for Doctor/Nurse in List Mode) */}
-        {(user.role === 'doctor' || user.role === 'nurse') && viewMode === 'list' && (
+        {/* Tab Navigation */}
+        <div className="tab-navigation" style={{
+          display: 'flex',
+          gap: '0.5rem',
+          marginBottom: '1.5rem',
+          borderBottom: '2px solid var(--card-border)',
+          paddingBottom: '0.5rem'
+        }}>
+          <button
+            className={`tab-btn ${activeTab === 'vitals' ? 'active' : ''}`}
+            onClick={() => setActiveTab('vitals')}
+            style={{
+              padding: '0.5rem 1rem',
+              border: 'none',
+              background: activeTab === 'vitals' ? 'var(--accent-color)' : 'transparent',
+              color: activeTab === 'vitals' ? 'white' : 'var(--text-secondary)',
+              borderRadius: '8px 8px 0 0',
+              cursor: 'pointer',
+              fontWeight: activeTab === 'vitals' ? '600' : '400',
+              transition: 'all 0.3s ease'
+            }}
+          >
+            📊 Vitals
+          </button>
+          <button
+            className={`tab-btn ${activeTab === 'consent' ? 'active' : ''}`}
+            onClick={() => setActiveTab('consent')}
+            style={{
+              padding: '0.5rem 1rem',
+              border: 'none',
+              background: activeTab === 'consent' ? 'var(--accent-color)' : 'transparent',
+              color: activeTab === 'consent' ? 'white' : 'var(--text-secondary)',
+              borderRadius: '8px 8px 0 0',
+              cursor: 'pointer',
+              fontWeight: activeTab === 'consent' ? '600' : '400',
+              transition: 'all 0.3s ease'
+            }}
+          >
+            🔐 Consent
+          </button>
+          <button
+            className={`tab-btn ${activeTab === 'images' ? 'active' : ''}`}
+            onClick={() => setActiveTab('images')}
+            style={{
+              padding: '0.5rem 1rem',
+              border: 'none',
+              background: activeTab === 'images' ? 'var(--accent-color)' : 'transparent',
+              color: activeTab === 'images' ? 'white' : 'var(--text-secondary)',
+              borderRadius: '8px 8px 0 0',
+              cursor: 'pointer',
+              fontWeight: activeTab === 'images' ? '600' : '400',
+              transition: 'all 0.3s ease'
+            }}
+          >
+            🖼️ Images
+          </button>
+          <button
+            className={`tab-btn ${activeTab === 'appointments' ? 'active' : ''}`}
+            onClick={() => setActiveTab('appointments')}
+            style={{
+              padding: '0.5rem 1rem',
+              border: 'none',
+              background: activeTab === 'appointments' ? 'var(--accent-color)' : 'transparent',
+              color: activeTab === 'appointments' ? 'white' : 'var(--text-secondary)',
+              borderRadius: '8px 8px 0 0',
+              cursor: 'pointer',
+              fontWeight: activeTab === 'appointments' ? '600' : '400',
+              transition: 'all 0.3s ease'
+            }}
+          >
+            📅 Appointments
+          </button>
+        </div>
+
+        {/* Appointments Tab */}
+        {activeTab === 'appointments' && (
           <>
-            <PatientStatistics theme={theme} />
-            <PatientVitalList
-              theme={theme}
-              currentUser={user}
-              onSelectPatient={(id) => {
-                setPatientId(id);
-                setViewMode('detail');
-              }}
-            />
+            {user.role === 'doctor' ? (
+              <DoctorAvailability user={user} />
+            ) : (
+              <AppointmentBooking user={user} />
+            )}
           </>
         )}
 
-        {/* Detailed Patient View */}
-        {viewMode === 'detail' && (
+        {/* Consent Tab */}
+        {activeTab === 'consent' && (
+          <ConsentManagement currentUser={user} theme={theme} />
+        )}
+
+        {/* Images Tab */}
+        {activeTab === 'images' && (
+          <SecureImageTransfer currentUser={user} theme={theme} />
+        )}
+
+        {/* Vitals Tab (existing content) */}
+        {activeTab === 'vitals' && (
           <>
-            {/* Patient Selection (Only for Doctor/Nurse) */}
-            {(user.role === 'doctor' || user.role === 'nurse') && (
-              <div className="form-group" style={{ maxWidth: '300px' }}>
-                <label>Monitor Patient ID:</label>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <input
-                    type="text"
-                    value={patientId}
-                    onChange={(e) => setPatientId(e.target.value)}
-                    placeholder="Enter ID"
-                  />
-                  <select
-                    onChange={(e) => setPatientId(e.target.value)}
-                    style={{
-                      padding: '0.5rem',
-                      borderRadius: '4px',
-                      border: '1px solid var(--input-border)',
-                      backgroundColor: 'var(--card-bg)', // adaptive
-                      color: 'var(--text-primary)'
-                    }}
-                  >
-                    <option value="">Select...</option>
-                    <option value="123">Patient 123 (Demo)</option>
-                    <option value="124">Patient 124 (Cardiac)</option>
-                    <option value="125">Patient 125 (Asthma)</option>
-                    <option value="999">Patient 999 (Emergency)</option>
-                  </select>
-                </div>
-              </div>
+
+
+            {/* Ward Monitoring List (Only for Doctor/Nurse in List Mode) */}
+            {(user.role === 'doctor' || user.role === 'nurse') && viewMode === 'list' && (
+              <>
+                <PatientStatistics theme={theme} />
+                <PatientVitalList
+                  theme={theme}
+                  currentUser={user}
+                  onSelectPatient={(id) => {
+                    setPatientId(id);
+                    setViewMode('detail');
+                  }}
+                />
+              </>
             )}
 
-            {/* Vital Signs Grid */}
-            <div className="vitals-grid">
-              <div className="card vital-card">
-                <div className="icon">❤️</div>
-                <div className="vital-info">
-                  <h3>Heart Rate</h3>
-                  <div className="value-unit">
-                    <span className="value">{currentData.heartRate}</span>
-                    <span className="unit"> BPM</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="card vital-card">
-                <div className="icon">💧</div>
-                <div className="vital-info">
-                  <h3>SpO2</h3>
-                  <div className="value-unit">
-                    <span className="value">{currentData.spo2}</span>
-                    <span className="unit"> %</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="card vital-card">
-                <div className="icon">🌡️</div>
-                <div className="vital-info">
-                  <h3>Temperature</h3>
-                  <div className="value-unit">
-                    <span className="value" style={{
-                      color: currentData.temperature > 37.5 ? 'var(--danger-color)' :
-                        currentData.temperature < 36.0 ? 'orange' : 'inherit'
-                    }}>
-                      {currentData.temperature !== '--' ? currentData.temperature.toFixed(1) : '--'}
-                    </span>
-                    <span className="unit"> °C</span>
-                  </div>
-                  {currentData.temperature > 37.5 && (
-                    <div style={{ fontSize: '0.7rem', color: 'var(--danger-color)', marginTop: '0.25rem' }}>
-                      ⚠️ Fever Detected
+            {/* Detailed Patient View */}
+            {viewMode === 'detail' && (
+              <>
+                {/* Patient Selection (Only for Doctor/Nurse) */}
+                {(user.role === 'doctor' || user.role === 'nurse') && (
+                  <div className="form-group" style={{ maxWidth: '300px' }}>
+                    <label>Monitor Patient ID:</label>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <input
+                        type="text"
+                        value={patientId}
+                        onChange={(e) => setPatientId(e.target.value)}
+                        placeholder="Enter ID"
+                      />
+                      <select
+                        onChange={(e) => setPatientId(e.target.value)}
+                        style={{
+                          padding: '0.5rem',
+                          borderRadius: '4px',
+                          border: '1px solid var(--input-border)',
+                          backgroundColor: 'var(--card-bg)', // adaptive
+                          color: 'var(--text-primary)'
+                        }}
+                      >
+                        <option value="">Select...</option>
+                        <option value="123">Patient 123 (Demo)</option>
+                        <option value="124">Patient 124 (Cardiac)</option>
+                        <option value="125">Patient 125 (Asthma)</option>
+                        <option value="999">Patient 999 (Emergency)</option>
+                      </select>
                     </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="card vital-card">
-                <div className="icon">☁️</div>
-                <div className="vital-info">
-                  <h3>Humidity</h3>
-                  <div className="value-unit">
-                    <span className="value" style={{
-                      color: currentData.humidity < 30 || currentData.humidity > 60 ? 'orange' : 'inherit'
-                    }}>
-                      {currentData.humidity !== '--' ? currentData.humidity.toFixed(1) : '--'}
-                    </span>
-                    <span className="unit"> %</span>
                   </div>
-                  {currentData.humidity !== '--' && (currentData.humidity < 30 || currentData.humidity > 60) && (
-                    <div style={{ fontSize: '0.7rem', color: 'orange', marginTop: '0.25rem' }}>
-                      ⚠️ {currentData.humidity < 30 ? 'Too Dry' : 'Too Humid'}
+                )}
+
+                {/* Vital Signs Grid */}
+                <div className="vitals-grid">
+                  <div className="card vital-card">
+                    <div className="icon">❤️</div>
+                    <div className="vital-info">
+                      <h3>Heart Rate</h3>
+                      <div className="value-unit">
+                        <span className="value">{currentData.heartRate}</span>
+                        <span className="unit"> BPM</span>
+                      </div>
                     </div>
-                  )}
-                </div>
-              </div>
+                  </div>
 
-              <div className="card vital-card">
-                <div className="icon">🩺</div>
-                <div className="vital-info">
-                  <h3>Blood Pressure</h3>
-                  <div className="value-unit">
-                    <span className="value" style={{
-                      color: currentData.systolicBP > 140 || currentData.diastolicBP > 90 ? 'var(--danger-color)' :
-                        currentData.systolicBP < 90 || currentData.diastolicBP < 60 ? 'orange' : 'inherit'
-                    }}>
-                      {currentData.systolicBP || '--'}/{currentData.diastolicBP || '--'}
-                    </span>
-                    <span className="unit"> mmHg</span>
+                  <div className="card vital-card">
+                    <div className="icon">💧</div>
+                    <div className="vital-info">
+                      <h3>SpO2</h3>
+                      <div className="value-unit">
+                        <span className="value">{currentData.spo2}</span>
+                        <span className="unit"> %</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="card vital-card">
+                    <div className="icon">🌡️</div>
+                    <div className="vital-info">
+                      <h3>Temperature</h3>
+                      <div className="value-unit">
+                        <span className="value" style={{
+                          color: currentData.temperature > 37.5 ? 'var(--danger-color)' :
+                            currentData.temperature < 36.0 ? 'orange' : 'inherit'
+                        }}>
+                          {currentData.temperature !== '--' ? currentData.temperature.toFixed(1) : '--'}
+                        </span>
+                        <span className="unit"> °C</span>
+                      </div>
+                      {currentData.temperature > 37.5 && (
+                        <div style={{ fontSize: '0.7rem', color: 'var(--danger-color)', marginTop: '0.25rem' }}>
+                          ⚠️ Fever Detected
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="card vital-card">
+                    <div className="icon">☁️</div>
+                    <div className="vital-info">
+                      <h3>Humidity</h3>
+                      <div className="value-unit">
+                        <span className="value" style={{
+                          color: currentData.humidity < 30 || currentData.humidity > 60 ? 'orange' : 'inherit'
+                        }}>
+                          {currentData.humidity !== '--' ? currentData.humidity.toFixed(1) : '--'}
+                        </span>
+                        <span className="unit"> %</span>
+                      </div>
+                      {currentData.humidity !== '--' && (currentData.humidity < 30 || currentData.humidity > 60) && (
+                        <div style={{ fontSize: '0.7rem', color: 'orange', marginTop: '0.25rem' }}>
+                          ⚠️ {currentData.humidity < 30 ? 'Too Dry' : 'Too Humid'}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="card vital-card">
+                    <div className="icon">🩺</div>
+                    <div className="vital-info">
+                      <h3>Blood Pressure</h3>
+                      <div className="value-unit">
+                        <span className="value" style={{
+                          color: currentData.systolicBP > 140 || currentData.diastolicBP > 90 ? 'var(--danger-color)' :
+                            currentData.systolicBP < 90 || currentData.diastolicBP < 60 ? 'orange' : 'inherit'
+                        }}>
+                          {currentData.systolicBP || '--'}/{currentData.diastolicBP || '--'}
+                        </span>
+                        <span className="unit"> mmHg</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
 
-            {/* Chart Section */}
-            <div className="card chart-card">
-              <div className="card-header">
-                <h2>Real-time Trends</h2>
-                <div className="live-badge">LIVE</div>
-              </div>
-              <div className="chart-container">
-                {loading ? <p style={{ color: 'var(--text-secondary)' }}>Loading data...</p> : <Line options={options} data={chartData} />}
-              </div>
-            </div>
+                {/* Chart Section */}
+                <div className="card chart-card">
+                  <div className="card-header">
+                    <h2>Real-time Trends</h2>
+                    <div className="live-badge">LIVE</div>
+                  </div>
+                  <div className="chart-container">
+                    {loading ? <p style={{ color: 'var(--text-secondary)' }}>Loading data...</p> : <Line options={options} data={chartData} />}
+                  </div>
+                </div>
 
-            {/* Risk Log Section */}
-            <div className="card" style={{ marginTop: '2rem' }}>
-              <div className="card-header">
-                <h2>Risk Alert Log</h2>
-              </div>
-              <ul style={{ listStyle: 'none', maxHeight: '200px', overflowY: 'auto' }}>
-                {history.slice().reverse().map((record, i) => {
-                  const isRisk = record.heartRate > 100 || record.spo2 < 95;
-                  return (
-                    <li key={i} style={{
-                      padding: '0.75rem',
-                      borderBottom: '1px solid var(--card-border)',
-                      color: isRisk ? 'var(--danger-color)' : 'var(--success-color)',
-                      display: 'flex',
-                      justifyContent: 'space-between'
-                    }}>
-                      <span>
-                        <strong>{isRisk ? 'HIGH RISK' : 'NORMAL'}</strong> - HR: {record.heartRate} | SpO2: {record.spo2}%
-                      </span>
-                      <small style={{ color: 'var(--text-secondary)' }}>{new Date().toLocaleTimeString()}</small>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-
-            {/* New Feature: Secure Image Transfer */}
-            <SecureImageTransfer theme={theme} />
-
-            {/* Consent Management for Patients */}
-            {user.role === 'patient' && (
-              <ConsentManagement patientId={user.username} theme={theme} />
+                {/* Risk Log Section */}
+                <div className="card" style={{ marginTop: '2rem' }}>
+                  <div className="card-header">
+                    <h2>Risk Alert Log</h2>
+                  </div>
+                  <ul style={{ listStyle: 'none', maxHeight: '200px', overflowY: 'auto' }}>
+                    {history.slice().reverse().map((record, i) => {
+                      const isRisk = record.heartRate > 100 || record.spo2 < 95;
+                      return (
+                        <li key={i} style={{
+                          padding: '0.75rem',
+                          borderBottom: '1px solid var(--card-border)',
+                          color: isRisk ? 'var(--danger-color)' : 'var(--success-color)',
+                          display: 'flex',
+                          justifyContent: 'space-between'
+                        }}>
+                          <span>
+                            <strong>{isRisk ? 'HIGH RISK' : 'NORMAL'}</strong> - HR: {record.heartRate} | SpO2: {record.spo2}%
+                          </span>
+                          <small style={{ color: 'var(--text-secondary)' }}>{new Date().toLocaleTimeString()}</small>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              </>
             )}
           </>
         )}
@@ -607,3 +709,4 @@ const Dashboard = ({ user, theme, toggleTheme }) => {
 };
 
 export default Dashboard;
+

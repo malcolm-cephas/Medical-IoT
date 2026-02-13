@@ -1,11 +1,9 @@
 package com.malcolm.medicaliot.model;
 
 import jakarta.persistence.*;
-import lombok.Data;
 import java.time.LocalDateTime;
 
 @Entity
-@Data
 @Table(name = "security_events")
 public class SecurityEvent {
 
@@ -25,8 +23,59 @@ public class SecurityEvent {
 
     private LocalDateTime timestamp;
 
+    public SecurityEvent() {
+    }
+
     @PrePersist
     protected void onCreate() {
         timestamp = LocalDateTime.now();
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getEventType() {
+        return eventType;
+    }
+
+    public void setEventType(String eventType) {
+        this.eventType = eventType;
+    }
+
+    public String getSeverity() {
+        return severity;
+    }
+
+    public void setSeverity(String severity) {
+        this.severity = severity;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getTriggeredByIp() {
+        return triggeredByIp;
+    }
+
+    public void setTriggeredByIp(String triggeredByIp) {
+        this.triggeredByIp = triggeredByIp;
+    }
+
+    public LocalDateTime getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(LocalDateTime timestamp) {
+        this.timestamp = timestamp;
     }
 }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { getBackendUrl } from '../config';
 
 const PatientStatistics = ({ theme }) => {
     const [stats, setStats] = useState({
@@ -24,7 +25,7 @@ const PatientStatistics = ({ theme }) => {
 
     const fetchStatistics = async () => {
         try {
-            const response = await axios.get('http://localhost:8080/api/patients?page=0&size=100');
+            const response = await axios.get(`${getBackendUrl()}/api/patients?page=0&size=100`);
             const patients = response.data.patients;
 
             let critical = 0;

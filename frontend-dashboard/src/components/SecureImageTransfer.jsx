@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { getAnalyticsUrl } from '../config';
 
 const SecureImageTransfer = ({ theme }) => {
     const [selectedImage, setSelectedImage] = useState(null);
@@ -28,7 +29,7 @@ const SecureImageTransfer = ({ theme }) => {
             reader.readAsDataURL(selectedImage);
             reader.onload = async () => {
                 const base64Content = reader.result.split(',')[1];
-                const response = await axios.post('http://localhost:4242/encrypt-image', {
+                const response = await axios.post(`${getAnalyticsUrl()}/encrypt-image`, {
                     image_base64: base64Content
                 });
                 setEncryptedData(response.data.encrypted_data);
@@ -46,7 +47,7 @@ const SecureImageTransfer = ({ theme }) => {
         if (!encryptedData) return;
         setLoading(true);
         try {
-            const response = await axios.post('http://localhost:4242/decrypt-image', {
+            const response = await axios.post(`${getAnalyticsUrl()}/decrypt-image`, {
                 encrypted_base64: encryptedData
             });
             setDecryptedImage(response.data.decrypted_image);
