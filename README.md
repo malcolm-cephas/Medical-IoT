@@ -252,6 +252,12 @@ This project is for educational purposes only.
 - Built as part of Major Project at DSCE
 - Uses Charm-Crypto library for ABE implementation
 - Inspired by modern healthcare security requirements
+  
+---
+
+## 📚 Related Projects
+
+- [Doctor-Patient-API](https://github.com/MarcusFranklin-GIT/doctor-patient-api) - Doctor Patient Consent API
 
 ---
 
