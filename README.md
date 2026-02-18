@@ -1,4 +1,3 @@
-
 # Medical IoT System - Secure Health Monitoring Platform
 
 A comprehensive, decentralized health monitoring system built with **Spring Boot**, **React**, and **Python** that implements advanced security features including **Attribute-Based Encryption (ABE)**, **ECDH encryption**, **IPFS storage**, and **blockchain logging**.
@@ -295,7 +294,7 @@ graph TB
 - **Analytics (Python)**: ABE encryption and image processing
 - **Database (MySQL)**: Persistent storage for all entities
 - **IPFS**: Decentralized storage for encrypted records
-- **Blockchain**: Immutable audit trail for compliance
+- **Blockchain**: Added Security Immutable audit trail for compliance
 
 
 
@@ -456,4 +455,5 @@ This project is for educational purposes only.
 
 ---
 
+**⚠️ Note**: This is a prototype system. For production use, additional security hardening, compliance certifications (HIPAA, GDPR), and professional security audits are required.
 **⚠️ Note**: This is a prototype system. For production use, additional security hardening, compliance certifications (HIPAA, GDPR), and professional security audits are required.
