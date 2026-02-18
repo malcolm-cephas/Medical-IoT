@@ -29,6 +29,9 @@ class ABEEngine:
             f.write(self.master_key_pair.export_key())
         return "Setup Complete. Master Key Generated."
 
+    def get_public_key(self):
+        return self.public_key.export_key().decode('utf-8')
+
     def encrypt(self, message, policy_attributes):
         # 1. Generate AES Key and Nonce
         aes_key = get_random_bytes(16)

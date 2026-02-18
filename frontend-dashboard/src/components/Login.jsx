@@ -1,26 +1,54 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { getBackendUrl } from '../config';
 
 const Login = ({ onLogin }) => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
-    const handleLogin = (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault();
+        setError('');
+        setLoading(true);
 
-        // Simulate Authentication for Demo
-        // In a real app, this would hit /api/auth/login
-        let role = 'patient';
-        if (username.toLowerCase().includes('doctor')) role = 'doctor';
-        else if (username.toLowerCase().includes('nurse')) role = 'nurse';
+        try {
+            const response = await axios.post(`${getBackendUrl()}/api/auth/login`, {
+                username,
+                password
+            });
 
-        // Validate simple demo credentials (or allow any for now as per "demo" feel)
-        if (password) {
-            onLogin({ username, role });
+            // Extract JWT and User
+            const { token, user } = response.data;
+
+            // Normalize role to lowercase for frontend consistency
+            if (user.role) user.role = user.role.toLowerCase();
+
+            // Set global Authorization header for all future requests
+            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+            // Store sessions (optional for persistence if App.jsx supports it)
+            localStorage.setItem('token', token);
+            localStorage.setItem('user', JSON.stringify(user));
+
+            onLogin(user);
             navigate('/dashboard');
-        } else {
-            alert("Please enter a password");
+        } catch (err) {
+            console.error("Login failed", err);
+            let errorMessage = "Login failed. Check credentials or server status.";
+
+            if (err.code === "ERR_NETWORK") {
+                errorMessage = "Network Error. Ensure the backend is running at http://localhost:8080";
+            } else if (err.response) {
+                errorMessage = err.response.data?.message || JSON.stringify(err.response.data);
+            }
+
+            setError(errorMessage);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -49,6 +77,19 @@ const Login = ({ onLogin }) => {
                             placeholder="system password"
                         />
                     </div>
+                    {error && (
+                        <div style={{
+                            color: '#ff6b6b',
+                            marginBottom: '1rem',
+                            textAlign: 'center',
+                            padding: '0.5rem',
+                            background: 'rgba(255, 107, 107, 0.1)',
+                            borderRadius: '4px',
+                            border: '1px solid rgba(255, 107, 107, 0.2)'
+                        }}>
+                            {error}
+                        </div>
+                    )}
                     <button type="submit" className="btn-login">Login</button>
                 </form>
                 <div className="login-help">
@@ -56,12 +97,10 @@ const Login = ({ onLogin }) => {
                     <hr style={{ border: 0, borderTop: '1px solid rgba(255,255,255,0.1)', margin: '1rem 0' }} />
                     <p><strong>Demo Credentials:</strong></p>
                     <ul>
-                        <li>Admin: admin / password</li>
-                        <li>Doctor: doctor_micheal / password</li>
-                        <li>Nurse: nurse_jane / password</li>
-                        <li>Patient: patient_001 / password</li>
-                        <li>Patient: patient_002 / password</li>
-                        <li>Patient: patient_003 / password</li>
+                        <li>Admin: admin / [YOUR_PASSWORD]</li>
+                        <li>Doctor: doctor_micheal / [YOUR_PASSWORD]</li>
+                        <li>Nurse: nurse_staff / [YOUR_PASSWORD]</li>
+                        <li>Patient: patient_001 / [YOUR_PASSWORD]</li>
                     </ul>
                 </div>
             </div>

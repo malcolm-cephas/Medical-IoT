@@ -8,14 +8,27 @@ const DoctorAvailability = ({ user }) => {
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState({ text: '', type: '' });
     const [newSlot, setNewSlot] = useState({
-        fromTime: '',
-        toTime: ''
+        daysOfWeek: [], // Changed from dayOfWeek to daysOfWeek array
+        startTime: '09:00',
+        endTime: '17:00'
     });
+    const [showDayDropdown, setShowDayDropdown] = useState(false);
+
+    const days = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
 
     useEffect(() => {
         fetchMyAppointments();
         fetchMySlots();
     }, []);
+
+    const toggleDay = (day) => {
+        const currentDays = [...newSlot.daysOfWeek];
+        if (currentDays.includes(day)) {
+            setNewSlot({ ...newSlot, daysOfWeek: currentDays.filter(d => d !== day) });
+        } else {
+            setNewSlot({ ...newSlot, daysOfWeek: [...currentDays, day] });
+        }
+    };
 
     const fetchMyAppointments = async () => {
         try {
@@ -41,6 +54,10 @@ const DoctorAvailability = ({ user }) => {
 
     const setAvailability = async (e) => {
         e.preventDefault();
+        if (newSlot.daysOfWeek.length === 0) {
+            setMessage({ text: 'Please select at least one day', type: 'error' });
+            return;
+        }
         setLoading(true);
 
         try {
@@ -50,7 +67,8 @@ const DoctorAvailability = ({ user }) => {
                 { headers: { 'X-User-Id': user.username } }
             );
             setMessage({ text: response.data.message, type: 'success' });
-            setNewSlot({ fromTime: '', toTime: '' });
+            alert(response.data.message); // Clear confirmation for user
+            setNewSlot({ ...newSlot, daysOfWeek: [] }); // Reset days after success
             fetchMySlots();
         } catch (error) {
             console.error('Error setting availability:', error);
@@ -62,6 +80,8 @@ const DoctorAvailability = ({ user }) => {
             setLoading(false);
         }
     };
+
+    // ... completeAppointment and cancelSlot functions remain unchanged ...
 
     const completeAppointment = async (appointmentId) => {
         setLoading(true);
@@ -82,7 +102,7 @@ const DoctorAvailability = ({ user }) => {
     };
 
     const cancelSlot = async (slotId) => {
-        if (!window.confirm('Are you sure you want to cancel this slot?')) return;
+        if (!window.confirm('Are you sure you want to remove these office hours?')) return;
 
         setLoading(true);
         try {
@@ -94,11 +114,16 @@ const DoctorAvailability = ({ user }) => {
             setMessage({ text: response.data.message, type: 'success' });
             fetchMySlots();
         } catch (error) {
-            console.error('Error canceling slot:', error);
-            setMessage({ text: 'Failed to cancel slot', type: 'error' });
+            console.error('Error removing hours:', error);
+            setMessage({ text: 'Failed to remove office hours', type: 'error' });
         } finally {
             setLoading(false);
         }
+    };
+
+    const formatTime = (timeString) => {
+        if (!timeString) return 'N/A';
+        return timeString.substring(0, 5);
     };
 
     const formatDateTime = (dateString) => {
@@ -113,15 +138,9 @@ const DoctorAvailability = ({ user }) => {
         });
     };
 
-    const getMinDateTime = () => {
-        const now = new Date();
-        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-        return now.toISOString().slice(0, 16);
-    };
-
     return (
         <div className="doctor-availability">
-            <h2>🩺 Doctor Availability Management</h2>
+            <h2>🩺 Office Hours Management</h2>
 
             {message.text && (
                 <div className={`message ${message.type}`}>
@@ -132,61 +151,123 @@ const DoctorAvailability = ({ user }) => {
 
             {/* Set Availability Form */}
             <div className="section">
-                <h3>Set New Availability</h3>
+                <h3>Set Recurring Weekly Schedule</h3>
                 <form onSubmit={setAvailability} className="availability-form">
-                    <div className="form-group">
-                        <label>From:</label>
-                        <input
-                            type="datetime-local"
-                            value={newSlot.fromTime}
-                            min={getMinDateTime()}
-                            onChange={(e) => setNewSlot({ ...newSlot, fromTime: e.target.value })}
-                            required
-                        />
+                    <div className="form-group" style={{ display: 'flex', flexDirection: 'row', gap: '1rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+                        <div style={{ flex: 1, minWidth: '200px', position: 'relative' }}>
+                            <label>Days of Week:</label>
+                            <div
+                                className="multi-select-trigger"
+                                onClick={() => setShowDayDropdown(!showDayDropdown)}
+                                style={{
+                                    width: '100%',
+                                    padding: '0.75rem',
+                                    borderRadius: '8px',
+                                    border: '1px solid rgba(255,255,255,0.2)',
+                                    background: 'rgba(255,255,255,0.05)',
+                                    color: 'white',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center'
+                                }}
+                            >
+                                <span>
+                                    {newSlot.daysOfWeek.length === 0
+                                        ? 'Select Days...'
+                                        : `${newSlot.daysOfWeek.length} days selected`}
+                                </span>
+                                <span>{showDayDropdown ? '▲' : '▼'}</span>
+                            </div>
+
+                            {showDayDropdown && (
+                                <div className="multi-select-dropdown" style={{
+                                    position: 'absolute',
+                                    top: '100%',
+                                    left: 0,
+                                    right: 0,
+                                    background: '#1e293b',
+                                    border: '1px solid rgba(255,255,255,0.2)',
+                                    borderRadius: '8px',
+                                    zIndex: 100,
+                                    marginTop: '4px',
+                                    maxHeight: '200px',
+                                    overflowY: 'auto',
+                                    padding: '0.5rem',
+                                    boxShadow: '0 8px 16px rgba(0,0,0,0.4)'
+                                }}>
+                                    {days.map(day => (
+                                        <label key={day} style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            padding: '0.5rem',
+                                            cursor: 'pointer',
+                                            gap: '0.5rem',
+                                            borderRadius: '4px',
+                                            transition: 'background 0.2s'
+                                        }} className="day-option">
+                                            <input
+                                                type="checkbox"
+                                                checked={newSlot.daysOfWeek.includes(day)}
+                                                onChange={() => toggleDay(day)}
+                                                style={{ cursor: 'pointer' }}
+                                            />
+                                            <span style={{ fontSize: '0.9rem', color: 'white' }}>{day}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                        <div style={{ flex: 1, minWidth: '150px' }}>
+                            <label>Start Time:</label>
+                            <input
+                                type="time"
+                                value={newSlot.startTime}
+                                onChange={(e) => setNewSlot({ ...newSlot, startTime: e.target.value })}
+                                required
+                                style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.05)', color: 'white' }}
+                            />
+                        </div>
+                        <div style={{ flex: 1, minWidth: '150px' }}>
+                            <label>End Time:</label>
+                            <input
+                                type="time"
+                                value={newSlot.endTime}
+                                onChange={(e) => setNewSlot({ ...newSlot, endTime: e.target.value })}
+                                required
+                                style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.05)', color: 'white' }}
+                            />
+                        </div>
+                        <button type="submit" className="btn-submit" disabled={loading} style={{ height: '45px' }}>
+                            {loading ? 'Updating...' : 'Set Office Hours'}
+                        </button>
                     </div>
-                    <div className="form-group">
-                        <label>To:</label>
-                        <input
-                            type="datetime-local"
-                            value={newSlot.toTime}
-                            min={newSlot.fromTime || getMinDateTime()}
-                            onChange={(e) => setNewSlot({ ...newSlot, toTime: e.target.value })}
-                            required
-                        />
-                    </div>
-                    <button type="submit" className="btn-submit" disabled={loading}>
-                        {loading ? 'Setting...' : 'Set Availability'}
-                    </button>
                 </form>
             </div>
 
-            {/* My Slots */}
+            {/* My Slots (Office Hours) */}
             <div className="section">
-                <h3>My Availability Slots</h3>
+                <h3>Current Office Hours</h3>
                 {slots.length === 0 ? (
-                    <p className="empty-state">No availability slots set</p>
+                    <p className="empty-state">No office hours configured</p>
                 ) : (
-                    <div className="slots-list">
+                    <div className="slots-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1rem' }}>
                         {slots.map(slot => (
-                            <div key={slot.id} className={`slot-card status-${slot.status.toLowerCase()}`}>
-                                <div className="slot-time">
-                                    <div>📅 {formatDateTime(slot.fromTime)}</div>
-                                    <div>to {formatDateTime(slot.toTime)}</div>
+                            <div key={slot.id} className="slot-card" style={{ padding: '1rem', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                                <div style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '0.5rem', color: 'var(--accent-color)' }}>
+                                    {slot.dayOfWeek}
                                 </div>
-                                <div className="slot-footer">
-                                    <span className={`status-badge ${slot.status.toLowerCase()}`}>
-                                        {slot.status}
-                                    </span>
-                                    {slot.status === 'AVAILABLE' && (
-                                        <button
-                                            className="btn-cancel-slot"
-                                            onClick={() => cancelSlot(slot.id)}
-                                            disabled={loading}
-                                        >
-                                            Cancel
-                                        </button>
-                                    )}
+                                <div className="slot-time" style={{ marginBottom: '1rem' }}>
+                                    🕐 {formatTime(slot.startTime)} - {formatTime(slot.endTime)}
                                 </div>
+                                <button
+                                    className="btn-cancel-slot"
+                                    onClick={() => cancelSlot(slot.id)}
+                                    disabled={loading}
+                                    style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: 'none', background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444', fontWeight: 'bold', cursor: 'pointer' }}
+                                >
+                                    Remove
+                                </button>
                             </div>
                         ))}
                     </div>
@@ -211,7 +292,7 @@ const DoctorAvailability = ({ user }) => {
                                 <div className="apt-time">
                                     🕐 {formatDateTime(apt.appointmentTime)}
                                 </div>
-                                {apt.status === 'SCHEDULED' && (
+                                {apt.status === 'CONFIRMED' && (
                                     <button
                                         className="btn-complete"
                                         onClick={() => completeAppointment(apt.id)}
@@ -362,7 +443,7 @@ const DoctorAvailability = ({ user }) => {
                     color: #22c55e;
                 }
 
-                .status-badge.booked, .status-badge.scheduled {
+                .status-badge.booked, .status-badge.confirmed {
                     background: rgba(59, 130, 246, 0.2);
                     color: #3b82f6;
                 }
@@ -407,6 +488,14 @@ const DoctorAvailability = ({ user }) => {
 
                 .btn-cancel-slot:hover:not(:disabled) {
                     background: rgba(239, 68, 68, 0.3);
+                }
+
+                .day-option:hover {
+                    background: rgba(255, 255, 255, 0.1);
+                }
+
+                .multi-select-trigger:hover {
+                    background: rgba(255, 255, 255, 0.08) !important;
                 }
 
                 .empty-state {

@@ -13,23 +13,25 @@ Doctors can set their available time slots for patient appointments.
 **Request Body**:
 ```json
 {
-  "fromTime": "2025-06-29T09:00:00",
-  "toTime": "2025-06-29T17:00:00"
+  "daysOfWeek": ["MONDAY", "WEDNESDAY"],
+  "startTime": "10:00:00",
+  "endTime": "18:00:00"
 }
 ```
 
 **Response**:
 ```json
 {
-  "message": "Availability set successfully",
-  "slot": {
-    "id": 1,
-    "doctorId": "doctor_micheal",
-    "fromTime": "2025-06-29T09:00:00",
-    "toTime": "2025-06-29T17:00:00",
-    "status": "AVAILABLE",
-    "createdAt": "2025-02-13T11:00:00"
-  }
+  "message": "Availability set successfully for 2 days",
+  "slots": [
+    {
+      "id": 1,
+      "doctorId": "doctor_micheal",
+      "dayOfWeek": "MONDAY",
+      "startTime": "10:00:00",
+      "endTime": "18:00:00"
+    }
+  ]
 }
 ```
 
@@ -181,19 +183,19 @@ This starts:
 ### Testing the Appointment Flow
 
 #### Step 1: Doctor Sets Availability
-1. Login as `doctor_micheal` / `password`
+1. Login as `doctor_micheal` / `<your-password>`
 2. Click "📅 Appointments" tab
 3. Set availability (e.g., tomorrow 9 AM - 5 PM)
 4. Click "Set Availability"
 
 #### Step 2: Patient Books Appointment
-1. Logout and login as `patient_alpha` / `password`
+1. Logout and login as `patient_alpha` / `<your-password>`
 2. Click "📅 Appointments" tab
 3. Click on a doctor card to view slots
 4. Click "Book Now" on a preferred slot
 
 #### Step 3: Doctor Manages Appointment
-1. Login as `doctor_micheal` / `password`
+1. Login as `doctor_micheal` / `<your-password>`
 2. Go to "📅 Appointments" tab
 3. View booked appointments
 4. Click "Mark as Completed" after consultation
@@ -206,8 +208,9 @@ curl -X POST http://localhost:8080/api/doctor/set-availability \
   -H "Content-Type: application/json" \
   -H "X-User-Id: doctor_micheal" \
   -d '{
-    "fromTime": "2025-06-29T09:00:00",
-    "toTime": "2025-06-29T17:00:00"
+    "daysOfWeek": ["MONDAY"],
+    "startTime": "10:00:00",
+    "endTime": "17:00:00"
   }'
 ```
 

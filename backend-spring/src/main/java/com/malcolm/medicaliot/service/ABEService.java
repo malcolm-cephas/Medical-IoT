@@ -1,70 +1,94 @@
 package com.malcolm.medicaliot.service;
 
-import org.springframework.beans.factory.annotation.Value;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.malcolm.medicaliot.security.KeyAuthorityService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+
+import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.GCMParameterSpec;
+import java.nio.charset.StandardCharsets;
+import java.security.KeyFactory;
+import java.security.PublicKey;
+import java.security.SecureRandom;
+import java.security.spec.X509EncodedKeySpec;
+import java.util.*;
 
 @Service
 public class ABEService {
 
-    @Value("${analytics.url}")
-    private String analyticsBaseUrl; // e.g., http://localhost:8000/analyze
+    @Autowired
+    private KeyAuthorityService keyAuthorityService;
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @SuppressWarnings("null")
-	public String encrypt(String data, String policy) {
+    public String encrypt(String data, String policy) {
         try {
-            // Construct the Python Encryption URL (derive from base URL)
-            // Assuming base is http://localhost:8000/analyze, we want
-            // http://localhost:8000/encrypt
-            String encryptUrl = analyticsBaseUrl.replace("/analyze", "/encrypt");
-
-            // Prepare Payload
-            // Policy format: "(Role:Doctor AND Dept:Cardiology)" -> ["doctor",
-            // "cardiology"] (Simplified parsing)
-            List<String> attributes = parsePolicy(policy);
-
-            Map<String, Object> payload = new HashMap<>();
-            payload.put("message", data);
-            payload.put("policy_attributes", attributes);
-
-            // Call Python Service
-            // Expecting returns: { "ciphertext": "...", "nonce": "...", ... }
-            @SuppressWarnings("unchecked")
-            Map<String, Object> response = restTemplate.postForObject(encryptUrl, payload, Map.class);
-
-            if (response != null && response.containsKey("ciphertext")) {
-                return "ABE:" + response.get("ciphertext").toString(); // Tag it as Real ABE
+            // 1. Get Master Public Key from Key Authority (Python Engine)
+            String publicPem = keyAuthorityService.getPublicKey();
+            if (publicPem == null) {
+                return "MOCK_ENC[NO_KEY]:" + data;
             }
 
-        } catch (Exception e) {
-            System.err.println("Real Encryption Failed: " + e.getMessage());
-            e.printStackTrace();
-        }
+            // 2. Generate Local AES Key (128-bit)
+            KeyGenerator keyGen = KeyGenerator.getInstance("AES");
+            keyGen.init(128);
+            SecretKey aesKey = keyGen.generateKey();
 
-        // Fallback if Python is down
-        return "MOCK_ENC[" + policy + "]:" + data;
+            // 3. Encrypt Data locally with AES-GCM
+            // Generate IV
+            byte[] iv = new byte[12];
+            new SecureRandom().nextBytes(iv);
+
+            Cipher aesCipher = Cipher.getInstance("AES/GCM/NoPadding");
+            GCMParameterSpec spec = new GCMParameterSpec(128, iv);
+            aesCipher.init(Cipher.ENCRYPT_MODE, aesKey, spec);
+
+            byte[] cipherTextBytes = aesCipher.doFinal(data.getBytes(StandardCharsets.UTF_8));
+
+            // 4. Encrypt AES Key with RSA Public Key (Hybrid Encapsulation)
+            // Parse PEM to PublicKey
+            String pemClean = publicPem
+                    .replace("-----BEGIN PUBLIC KEY-----", "")
+                    .replace("-----END PUBLIC KEY-----", "")
+                    .replaceAll("\\s", "");
+            byte[] encodedKey = Base64.getDecoder().decode(pemClean);
+            X509EncodedKeySpec keySpec = new X509EncodedKeySpec(encodedKey);
+            KeyFactory kf = KeyFactory.getInstance("RSA");
+            PublicKey rsaPublicKey = kf.generatePublic(keySpec);
+
+            // Encrypt AES Key
+            Cipher rsaCipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-1AndMGF1Padding");
+            rsaCipher.init(Cipher.ENCRYPT_MODE, rsaPublicKey);
+            byte[] encryptedKeyBytes = rsaCipher.doFinal(aesKey.getEncoded());
+
+            // 5. Construct JSON Payload (Matching Python format for compatibility)
+            Map<String, Object> packageMap = new HashMap<>();
+            packageMap.put("policy", parsePolicy(policy));
+            packageMap.put("ciphertext", Base64.getEncoder().encodeToString(cipherTextBytes));
+            packageMap.put("nonce", Base64.getEncoder().encodeToString(iv));
+            packageMap.put("encrypted_key", Base64.getEncoder().encodeToString(encryptedKeyBytes));
+            packageMap.put("status", "HYBRID_ENCRYPTION_JAVA_LOCAL");
+
+            return "ABE:" + objectMapper.writeValueAsString(packageMap);
+
+        } catch (Exception e) {
+            System.err.println("Hybrid Encryption Failed: " + e.getMessage());
+            e.printStackTrace();
+            return "MOCK_ENC[ERROR]:" + data;
+        }
     }
 
     public String decrypt(String cipherText, String userJsonAttributes) {
-        // Decryption requires User Keys which is complex to pass around in this demo.
-        // We will keep the mock check for now to allow the Dashboard to work.
-        return "Decryption requires Local Python Engine";
+        // Decryption requires User Secret Keys (USK) and Python Engine logic.
+        // In this architecture, this happens on the client side or specialized service.
+        return "Decryption requires Local Python Engine or Client-Side Tool";
     }
 
     private List<String> parsePolicy(String policy) {
-        // Simple parser: Extract words, ignore operators for demo
-        // "(Role:Doctor AND Dept:Cardiology)" -> ["doctor", "cardiology"]
-        // In a real system, you'd parse the boolean formula.
-        // Here we just grab the values after ":"
-
-        // Mocking the attributes for the demo to match what the Python Engine expects
-        // Python Mock Keygen expects: "doctor", "cardiology"
+        // Mock policy parsing to match existing logic
         if (policy.contains("Doctor"))
             return Arrays.asList("doctor", "cardiology");
         if (policy.contains("Nurse"))

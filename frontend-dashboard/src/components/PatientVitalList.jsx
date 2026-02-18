@@ -98,7 +98,7 @@ const PatientVitalList = ({ onSelectPatient, theme, currentUser }) => {
                 <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                     <input
                         type="text"
-                        placeholder="🔍 Search by Patient ID..."
+                        placeholder="🔍 Search by ID or Name..."
                         value={searchTerm}
                         onChange={(e) => { setSearchTerm(e.target.value); setPage(0); }}
                         style={{
@@ -128,6 +128,7 @@ const PatientVitalList = ({ onSelectPatient, theme, currentUser }) => {
                     <thead>
                         <tr style={{ borderBottom: '2px solid var(--card-border)', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
                             <th style={{ padding: '1rem' }}>Patient ID</th>
+                            <th style={{ padding: '1rem' }}>Patient Info</th>
                             <th style={{ padding: '1rem' }}>Department</th>
                             <th style={{ padding: '1rem' }}>Heart Rate</th>
                             <th style={{ padding: '1rem' }}>SpO2</th>
@@ -147,6 +148,12 @@ const PatientVitalList = ({ onSelectPatient, theme, currentUser }) => {
                                 <tr key={patient.username} style={{ borderBottom: '1px solid var(--card-border)', transition: 'background 0.2s' }}>
                                     <td style={{ padding: '1rem' }}>
                                         <strong>{patient.username}</strong>
+                                    </td>
+                                    <td style={{ padding: '1rem' }}>
+                                        <div style={{ fontWeight: 500 }}>{patient.fullName || 'Unknown'}</div>
+                                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                                            {patient.gender || '-'}, {patient.age || '-'} yrs
+                                        </div>
                                     </td>
                                     <td style={{ padding: '1rem' }}>{patient.department}</td>
                                     <td style={{ padding: '1rem' }}>

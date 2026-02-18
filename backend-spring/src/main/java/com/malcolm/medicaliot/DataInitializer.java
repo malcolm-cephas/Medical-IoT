@@ -23,27 +23,45 @@ public class DataInitializer {
 
             // 1. Create Doctor
             if (userRepository.findByUsername("doctor_micheal").isEmpty()) {
-                userRepository.save(new User(null, "doctor_micheal", encoder.encode("password"), "DOCTOR", "CARDIOLOGY",
-                        "doctor,cardiology"));
+                User u = new User(null, "doctor_micheal", encoder.encode("password"), "DOCTOR", "CARDIOLOGY",
+                        "doctor,cardiology");
+                u.setFullName("Dr. Micheal Scott");
+                u.setAge(45);
+                u.setGender("M");
+                userRepository.save(u);
             }
 
             // 2. Create Nurse
             if (userRepository.findByUsername("nurse_jane").isEmpty()) {
-                userRepository
-                        .save(new User(null, "nurse_jane", encoder.encode("password"), "NURSE", "GENERAL", "nurse"));
+                User u = new User(null, "nurse_jane", encoder.encode("password"), "NURSE", "GENERAL", "nurse");
+                u.setFullName("Nurse Jane Doe");
+                u.setAge(32);
+                u.setGender("F");
+                userRepository.save(u);
             }
 
             // 3. Create Admin
             if (userRepository.findByUsername("admin").isEmpty()) {
-                userRepository.save(new User(null, "admin", encoder.encode("password"), "ADMIN", "SYSTEM", "admin"));
+                User u = new User(null, "admin", encoder.encode("password"), "ADMIN", "SYSTEM", "admin");
+                u.setFullName("System Administrator");
+                u.setAge(30);
+                u.setGender("M");
+                userRepository.save(u);
             }
 
             // 4. Create Specific Test Patients and Initial Data
             String[] testPatients = { "alpha", "beta", "gamma", "patient_alpha", "patient_beta", "patient_gamma" };
-            for (String username : testPatients) {
+            String[] commonNames = { "Alice Smith", "Bob Jones", "Charlie Brown", "David Wilson", "Eva Green",
+                    "Frank White" };
+
+            for (int k = 0; k < testPatients.length; k++) {
+                String username = testPatients[k];
                 if (userRepository.findByUsername(username).isEmpty()) {
-                    userRepository.save(
-                            new User(null, username, encoder.encode("password"), "PATIENT", "GENERAL", "patient"));
+                    User u = new User(null, username, encoder.encode("password"), "PATIENT", "GENERAL", "patient");
+                    u.setFullName(commonNames[k]);
+                    u.setAge(20 + random.nextInt(60));
+                    u.setGender(random.nextBoolean() ? "M" : "F");
+                    userRepository.save(u);
                 }
 
                 // Seed some initial data if none exists
@@ -64,11 +82,23 @@ public class DataInitializer {
             }
 
             // 5. Create 35 General Patient accounts
+            String[] firstNames = { "James", "Mary", "John", "Patricia", "Robert", "Jennifer", "Michael", "Linda",
+                    "William", "Elizabeth" };
+            String[] lastNames = { "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis",
+                    "Rodriguez", "Martinez" };
+
             for (int i = 1; i <= 35; i++) {
                 String username = "patient_" + String.format("%03d", i);
                 if (userRepository.findByUsername(username).isEmpty()) {
-                    userRepository.save(
-                            new User(null, username, encoder.encode("password"), "PATIENT", "GENERAL", "patient"));
+                    User u = new User(null, username, encoder.encode("password"), "PATIENT", "GENERAL", "patient");
+
+                    String fn = firstNames[random.nextInt(firstNames.length)];
+                    String ln = lastNames[random.nextInt(lastNames.length)];
+                    u.setFullName(fn + " " + ln);
+                    u.setAge(18 + random.nextInt(70));
+                    u.setGender(random.nextBoolean() ? "M" : "F");
+
+                    userRepository.save(u);
 
                     // Initial vitals for the ward list
                     SensorData data = new SensorData();

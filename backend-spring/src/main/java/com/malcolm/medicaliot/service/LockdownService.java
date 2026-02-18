@@ -11,6 +11,9 @@ public class LockdownService {
     @Autowired
     private SecurityRepository securityRepository;
 
+    @Autowired
+    private SystemLogService logService;
+
     // In-memory flag for speed (backed by DB log)
     private boolean isLockdownActive = false;
     private String lockdownReason = "";
@@ -43,7 +46,7 @@ public class LockdownService {
 
     // Intrusion Detection
     private final java.util.Map<String, Integer> failedLoginAttempts = new java.util.concurrent.ConcurrentHashMap<>();
-    private static final int MAX_ATTEMPTS = 5;
+    private static final int MAX_ATTEMPTS = 100;
 
     public void recordFailedLogin(String ip) {
         int attempts = failedLoginAttempts.getOrDefault(ip, 0) + 1;
@@ -68,5 +71,7 @@ public class LockdownService {
         event.setDescription(description);
         event.setTriggeredByIp(ip);
         securityRepository.save(event);
+        logService.log("SYSTEM", type, description + " [Source: " + ip + "]",
+                severity.equals("CRITICAL") || severity.equals("HIGH") ? "FAILURE" : "INFO");
     }
 }

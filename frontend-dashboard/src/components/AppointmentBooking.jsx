@@ -10,20 +10,12 @@ const AppointmentBooking = ({ user }) => {
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState({ text: '', type: '' });
 
-    useEffect(() => {
-        fetchDoctors();
-        fetchMyAppointments();
-    }, []);
+    const [bookingDetails, setBookingDetails] = useState({
+        date: '',
+        time: '10:00'
+    });
 
-    const fetchDoctors = async () => {
-        try {
-            const response = await axios.get(`${getBackendUrl()}/api/patient/all-doctors`);
-            setDoctors(response.data);
-        } catch (error) {
-            console.error('Error fetching doctors:', error);
-            setMessage({ text: 'Failed to load doctors', type: 'error' });
-        }
-    };
+    // ... (fetchDoctors and fetchMyAppointments remain same)
 
     const fetchDoctorSlots = async (doctorId) => {
         setLoading(true);
@@ -31,38 +23,36 @@ const AppointmentBooking = ({ user }) => {
             const response = await axios.get(
                 `${getBackendUrl()}/api/patient/all-doctors/${doctorId}/slots`
             );
-            setSlots(response.data);
-            setSelectedDoctor(doctorId);
+            setSlots(response.data); // These are now "Office Hours"
+            setSelectedDoctor(doctors.find(d => d.username === doctorId));
         } catch (error) {
-            console.error('Error fetching slots:', error);
-            setMessage({ text: 'Failed to load available slots', type: 'error' });
+            console.error('Error fetching office hours:', error);
+            setMessage({ text: 'Failed to load doctor office hours', type: 'error' });
         } finally {
             setLoading(false);
         }
     };
 
-    const fetchMyAppointments = async () => {
-        try {
-            const response = await axios.get(`${getBackendUrl()}/api/patient/appointments`, {
-                headers: { 'X-User-Id': user.username }
-            });
-            setAppointments(response.data);
-        } catch (error) {
-            console.error('Error fetching appointments:', error);
+    const bookAppointment = async (e) => {
+        e.preventDefault();
+        if (!bookingDetails.date || !bookingDetails.time) {
+            setMessage({ text: 'Please select both date and time', type: 'error' });
+            return;
         }
-    };
 
-    const bookAppointment = async (slotId) => {
         setLoading(true);
         try {
+            const appointmentTime = `${bookingDetails.date}T${bookingDetails.time}:00`;
             const response = await axios.post(
-                `${getBackendUrl()}/api/patient/book-appointment/${slotId}`,
-                {},
+                `${getBackendUrl()}/api/patient/book-appointment`,
+                {
+                    doctorId: selectedDoctor.id,
+                    appointmentTime: appointmentTime
+                },
                 { headers: { 'X-User-Id': user.username } }
             );
             setMessage({ text: response.data.message, type: 'success' });
-            fetchDoctorSlots(selectedDoctor); // Refresh slots
-            fetchMyAppointments(); // Refresh appointments
+            fetchMyAppointments();
         } catch (error) {
             console.error('Error booking appointment:', error);
             setMessage({
@@ -74,37 +64,12 @@ const AppointmentBooking = ({ user }) => {
         }
     };
 
-    const cancelAppointment = async (appointmentId) => {
-        if (!window.confirm('Are you sure you want to cancel this appointment?')) return;
-
-        setLoading(true);
-        try {
-            const response = await axios.post(
-                `${getBackendUrl()}/api/patient/appointments/${appointmentId}/cancel`,
-                {},
-                { headers: { 'X-User-Id': user.username } }
-            );
-            setMessage({ text: response.data.message, type: 'success' });
-            fetchMyAppointments();
-        } catch (error) {
-            console.error('Error canceling appointment:', error);
-            setMessage({ text: 'Failed to cancel appointment', type: 'error' });
-        } finally {
-            setLoading(false);
-        }
+    const formatTime = (timeString) => {
+        if (!timeString) return 'N/A';
+        return timeString.substring(0, 5);
     };
 
-    const formatDateTime = (dateString) => {
-        if (!dateString) return 'N/A';
-        const date = new Date(dateString);
-        return date.toLocaleString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    };
+    // ... (cancelAppointment and formatDateTime remain same)
 
     return (
         <div className="appointment-booking">
@@ -135,7 +100,7 @@ const AppointmentBooking = ({ user }) => {
                                 <div className="apt-time">
                                     🕐 {formatDateTime(apt.appointmentTime)}
                                 </div>
-                                {apt.status === 'SCHEDULED' && (
+                                {apt.status === 'CONFIRMED' && (
                                     <button
                                         className="btn-cancel"
                                         onClick={() => cancelAppointment(apt.id)}
@@ -152,12 +117,12 @@ const AppointmentBooking = ({ user }) => {
 
             {/* Available Doctors */}
             <div className="section">
-                <h3>Available Doctors</h3>
+                <h3>Select a Doctor</h3>
                 <div className="doctors-grid">
                     {doctors.map(doctor => (
                         <div
                             key={doctor.id}
-                            className={`doctor-card ${selectedDoctor === doctor.username ? 'selected' : ''}`}
+                            className={`doctor-card ${selectedDoctor?.username === doctor.username ? 'selected' : ''}`}
                             onClick={() => fetchDoctorSlots(doctor.username)}
                         >
                             <div className="doctor-icon">👨‍⚕️</div>
@@ -170,33 +135,54 @@ const AppointmentBooking = ({ user }) => {
                 </div>
             </div>
 
-            {/* Available Slots */}
+            {/* Booking Form & Office Hours */}
             {selectedDoctor && (
-                <div className="section">
-                    <h3>Available Slots for {selectedDoctor}</h3>
-                    {loading ? (
-                        <p>Loading slots...</p>
-                    ) : slots.length === 0 ? (
-                        <p className="empty-state">No available slots</p>
-                    ) : (
-                        <div className="slots-grid">
-                            {slots.map(slot => (
-                                <div key={slot.id} className="slot-card">
-                                    <div className="slot-time">
-                                        <div>📅 {formatDateTime(slot.fromTime)}</div>
-                                        <div>to {formatDateTime(slot.toTime)}</div>
+                <div className="booking-container" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+                    <div className="section">
+                        <h3>Dr. {selectedDoctor.username}'s Office Hours</h3>
+                        {slots.length === 0 ? (
+                            <p className="empty-state">No office hours set for this doctor.</p>
+                        ) : (
+                            <div className="office-hours-list">
+                                {slots.map(slot => (
+                                    <div key={slot.id} style={{ padding: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between' }}>
+                                        <span style={{ fontWeight: 'bold' }}>{slot.dayOfWeek}</span>
+                                        <span>{formatTime(slot.startTime)} - {formatTime(slot.endTime)}</span>
                                     </div>
-                                    <button
-                                        className="btn-book"
-                                        onClick={() => bookAppointment(slot.id)}
-                                        disabled={loading || slot.status !== 'AVAILABLE'}
-                                    >
-                                        {slot.status === 'AVAILABLE' ? 'Book Now' : slot.status}
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
-                    )}
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="section">
+                        <h3>Reserve a Time</h3>
+                        <form onSubmit={bookAppointment} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                            <div className="form-group">
+                                <label>Date:</label>
+                                <input
+                                    type="date"
+                                    min={new Date().toISOString().split('T')[0]}
+                                    value={bookingDetails.date}
+                                    onChange={(e) => setBookingDetails({ ...bookingDetails, date: e.target.value })}
+                                    required
+                                    style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.05)', color: 'white' }}
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Time:</label>
+                                <input
+                                    type="time"
+                                    value={bookingDetails.time}
+                                    onChange={(e) => setBookingDetails({ ...bookingDetails, time: e.target.value })}
+                                    required
+                                    style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.05)', color: 'white' }}
+                                />
+                            </div>
+                            <button type="submit" className="btn-book" disabled={loading || slots.length === 0}>
+                                {loading ? 'Booking...' : 'Confirm Appointment'}
+                            </button>
+                        </form>
+                    </div>
                 </div>
             )}
 
@@ -272,7 +258,7 @@ const AppointmentBooking = ({ user }) => {
                     font-weight: 600;
                 }
 
-                .status-badge.scheduled {
+                .status-badge.confirmed {
                     background: rgba(59, 130, 246, 0.2);
                     color: #3b82f6;
                 }

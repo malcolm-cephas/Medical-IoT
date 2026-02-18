@@ -1,7 +1,7 @@
 package com.malcolm.medicaliot.model;
 
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 @Entity
 @Table(name = "doctor_availability")
@@ -12,35 +12,27 @@ public class DoctorAvailability {
     private Long id;
 
     @Column(nullable = false)
-    private String doctorId; // Username of the doctor
+    private Long doctorId;
 
     @Column(nullable = false)
-    private LocalDateTime fromTime;
+    private String dayOfWeek; // e.g., "MONDAY", "TUESDAY"
 
     @Column(nullable = false)
-    private LocalDateTime toTime;
+    private LocalTime startTime;
 
     @Column(nullable = false)
-    private String status; // AVAILABLE, BOOKED, CANCELLED
-
-    private LocalDateTime createdAt;
+    private LocalTime endTime;
 
     public DoctorAvailability() {
     }
 
-    public DoctorAvailability(String doctorId, LocalDateTime fromTime, LocalDateTime toTime, String status) {
+    public DoctorAvailability(Long doctorId, String dayOfWeek, LocalTime startTime, LocalTime endTime) {
         this.doctorId = doctorId;
-        this.fromTime = fromTime;
-        this.toTime = toTime;
-        this.status = status;
+        this.dayOfWeek = dayOfWeek;
+        this.startTime = startTime;
+        this.endTime = endTime;
     }
 
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-    }
-
-    // Getters and Setters
     public Long getId() {
         return id;
     }
@@ -49,43 +41,35 @@ public class DoctorAvailability {
         this.id = id;
     }
 
-    public String getDoctorId() {
+    public Long getDoctorId() {
         return doctorId;
     }
 
-    public void setDoctorId(String doctorId) {
+    public void setDoctorId(Long doctorId) {
         this.doctorId = doctorId;
     }
 
-    public LocalDateTime getFromTime() {
-        return fromTime;
+    public String getDayOfWeek() {
+        return dayOfWeek;
     }
 
-    public void setFromTime(LocalDateTime fromTime) {
-        this.fromTime = fromTime;
+    public void setDayOfWeek(String dayOfWeek) {
+        this.dayOfWeek = dayOfWeek;
     }
 
-    public LocalDateTime getToTime() {
-        return toTime;
+    public LocalTime getStartTime() {
+        return startTime;
     }
 
-    public void setToTime(LocalDateTime toTime) {
-        this.toTime = toTime;
+    public void setStartTime(LocalTime startTime) {
+        this.startTime = startTime;
     }
 
-    public String getStatus() {
-        return status;
+    public LocalTime getEndTime() {
+        return endTime;
     }
 
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
+    public void setEndTime(LocalTime endTime) {
+        this.endTime = endTime;
     }
 }

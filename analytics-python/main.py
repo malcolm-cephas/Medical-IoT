@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
 import pandas as pd
@@ -10,6 +11,15 @@ from abe_engine import abe
 from ecdh_engine import ecdh
 
 app = FastAPI()
+
+# Enable CORS for Frontend Access
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
 
 # --- Models ---
 
@@ -39,6 +49,10 @@ class DecryptImageRequest(BaseModel):
 @app.get("/")
 def read_root():
     return {"message": "Medical IoT Analytics Service"}
+
+@app.get("/public-key")
+def get_public_key():
+    return {"public_key": abe.get_public_key()}
 
 @app.post("/encrypt")
 def encrypt_data(req: EncryptRequest):

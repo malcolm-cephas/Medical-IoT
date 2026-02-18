@@ -1,69 +1,80 @@
 package com.malcolm.medicaliot.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.session.SessionRegistry;
-import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.session.HttpSessionEventPublisher;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.lang.NonNull;
 
 import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
 @EnableWebSecurity
+@org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 public class SecurityConfig {
+
+    @Autowired
+    private com.malcolm.medicaliot.security.JwtAuthenticationFilter jwtAuthFilter;
+
+    @Autowired
+    private com.malcolm.medicaliot.security.CustomUserDetailsService userDetailsService;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .cors(withDefaults()) // Enable CORS
-                .csrf(csrf -> csrf.disable()) // Disable CSRF for development/testing
-                .headers(headers -> headers.frameOptions(frame -> frame.disable())) // Enable H2 console frames
+                .cors(withDefaults())
+                .csrf(csrf -> csrf.disable())
+                .headers(headers -> headers.frameOptions(frame -> frame.disable()))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll() // Allow Auth endpoints
-                        .requestMatchers("/api/sensor/**").permitAll() // Allow Sensor uploads
-                        .requestMatchers("/api/patients/**").permitAll() // Allow Patient list for dashboard
-                        .requestMatchers("/api/consent/**").permitAll() // Allow Consent management
-                        .requestMatchers("/api/security/**").permitAll() // Allow Security status
-                        .requestMatchers("/api/performance/**").permitAll() // Allow Performance metrics
-                        .requestMatchers("/api/emergency/**").permitAll() // Allow Emergency override
-                        .requestMatchers("/api/export/**").permitAll() // Allow Data export
-                        .requestMatchers("/api/admin/sessions/**").permitAll() // Allow Session monitoring
-                        .requestMatchers("/api/doctor/**").permitAll() // Allow Doctor availability & appointments
-                        .requestMatchers("/api/patient/**").permitAll() // Allow Patient appointment booking
-                        .requestMatchers("/ws-vitals/**").permitAll() // Allow WebSocket handshake
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/sensor/**").permitAll() // Keep open for mock sensors (or add Basic Auth
+                                                                       // later)
+                        .requestMatchers("/ws-vitals/**").permitAll()
+                        .requestMatchers("/api/appointments/**").permitAll()
+                        .requestMatchers("/api/availability/**").permitAll()
+                        .requestMatchers("/error").permitAll()
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
-                        .maximumSessions(5) // Allow up to 5 simultaneous sessions per user
-                        .sessionRegistry(sessionRegistry()))
-                .httpBasic(withDefaults()); // Use Basic Auth for simplicity in Phase 1
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authenticationProvider(authenticationProvider())
+                .addFilterBefore(jwtAuthFilter,
+                        org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
     @Bean
-    public SessionRegistry sessionRegistry() {
-        return new SessionRegistryImpl();
+    public org.springframework.security.authentication.AuthenticationProvider authenticationProvider() {
+        org.springframework.security.authentication.dao.DaoAuthenticationProvider authProvider = new org.springframework.security.authentication.dao.DaoAuthenticationProvider();
+        authProvider.setUserDetailsService(userDetailsService);
+        authProvider.setPasswordEncoder(passwordEncoder());
+        return authProvider;
     }
 
     @Bean
-    public HttpSessionEventPublisher httpSessionEventPublisher() {
-        return new HttpSessionEventPublisher();
+    public org.springframework.security.authentication.AuthenticationManager authenticationManager(
+            org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration config)
+            throws Exception {
+        return config.getAuthenticationManager();
+    }
+
+    @Bean
+    public org.springframework.security.crypto.password.PasswordEncoder passwordEncoder() {
+        return new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
     }
 
     @Bean
     public WebMvcConfigurer corsConfigurer() {
         return new WebMvcConfigurer() {
             @Override
-            public void addCorsMappings(CorsRegistry registry) {
+            public void addCorsMappings(@NonNull CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOriginPatterns("*") // Allow all origins for local network access
+                        .allowedOriginPatterns("*")
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
                         .allowCredentials(true);

@@ -70,14 +70,17 @@ public class PatientAppointmentController {
 
     /**
      * Book an appointment
-     * Adapted from the NestJS repository's book-appointment/:slotId endpoint
      */
-    @PostMapping("/book-appointment/{slotId}")
+    @PostMapping("/book-appointment")
     public ResponseEntity<?> bookAppointment(
-            @PathVariable Long slotId,
+            @RequestBody Map<String, Object> request,
             @RequestHeader("X-User-Id") String patientId) {
         try {
-            Map<String, Object> result = appointmentService.bookAppointment(slotId, patientId);
+            Long doctorId = Long.parseLong(request.get("doctorId").toString());
+            java.time.LocalDateTime appointmentTime = java.time.LocalDateTime
+                    .parse(request.get("appointmentTime").toString());
+
+            Map<String, Object> result = appointmentService.bookAppointment(doctorId, patientId, appointmentTime);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.status(400).body(Map.of(

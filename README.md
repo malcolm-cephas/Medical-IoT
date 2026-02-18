@@ -8,16 +8,19 @@ A comprehensive, decentralized health monitoring system built with **Spring Boot
 ### Core Functionality
 - **Real-time Patient Monitoring**: Track vital signs including Heart Rate, SpO2, Temperature, Humidity, and Blood Pressure
 - **Multi-Role Dashboard**: Separate interfaces for Doctors, Nurses, and Patients
-- **Consent-Based Access Control**: Patients can approve/reject/revoke access requests from healthcare providers
-- **Doctor-Patient Appointments**: Complete appointment scheduling system with availability management
+- **Consent-Based Access Control**: Patients can approve/reject/revoke access requests. (Security: Approval buttons are only accessible to the patient user role).
+- **Doctor-Patient Appointments**: Refined appointment system with recurring weekly office hours and instant confirmation messages.
 - **Ward Statistics**: Aggregated patient metrics and critical alerts for healthcare staff
+- **Enhanced Patient Identity**: Display of full names, ages, and genders alongside patient IDs
+- **System Activity Hub**: Dedicated administrator dashboard for tracking all system happenings (logins, bookings, security events)
 - **Live Charts**: Real-time trends with dual Y-axis support for comprehensive vital monitoring
+- **Security Audit Dashboard**: Real-time visualization of the immutable blockchain ledger and security events
 
 ### Security & Privacy
 - **Attribute-Based Encryption (ABE)**: Fine-grained access control for patient data
 - **ECDH Image Encryption**: Secure medical image transfer with scrambling
 - **IPFS Integration**: Decentralized storage for encrypted health records
-- **Blockchain Logging**: Immutable audit trail for all data access events
+- **Blockchain Logging**: SHA-256 linked immutable audit trail for all data access events
 - **Emergency Override**: Break-glass access with automatic blockchain logging
 - **Intrusion Detection**: Automated system lockdown on security threats
 
@@ -27,6 +30,17 @@ A comprehensive, decentralized health monitoring system built with **Spring Boot
 - **Mobile Responsive**: Optimized for tablets and smartphones
 - **Dark/Light Theme**: User-customizable interface
 - **Performance Metrics**: Real-time system benchmarks
+
+## 🔐 Environment Variables (.env)
+
+The system uses a central `.env` file in the root directory to store sensitive information. **Never commit your `.env` file to version control.**
+
+| Variable | Description | Default |
+| :--- | :--- | :--- |
+| `DB_PASSWORD` | MySQL Root Password | `malcolm` |
+| `ADMIN_PASSWORD` | System Admin Password | `password` |
+| `SSL_KEYSTORE_PASSWORD` | SSL Certificate Password | `password` |
+| `ANALYTICS_URL` | Analytical Service Endpoint | `http://localhost:4242/analyze` |
 
 ## 🛠️ Technology Stack
 
@@ -41,11 +55,12 @@ A comprehensive, decentralized health monitoring system built with **Spring Boot
 - **Chart.js** - Real-time data visualization
 - **Axios** - HTTP client
 
-### Analytics Service
-- **Python 3.x** - FastAPI service
-- **Charm-Crypto** - ABE encryption
-- **Pillow** - Image processing
-- **NumPy** - Numerical operations
+### Edge / Hardware
+- **Arduino Uno R4 (WiFi)** - Edge device integration
+- **MAX30102** - Pulse Oximetry & Heart Rate sensor
+- **DHT22** - Temperature & Humidity sensor
+- **AD8232** - ECG Lead monitoring sensor
+- **C++ / Arduino** - Firmware logic
 
 ## 📋 Prerequisites
 
@@ -54,6 +69,7 @@ A comprehensive, decentralized health monitoring system built with **Spring Boot
 - **Python 3.8+** (for analytics service)
 - **MySQL 8.0+** (database)
 - **Maven 3.6+** (build tool)
+- **Docker Desktop** (Optional, for containerized deployment)
 
 ## 🚀 Quick Start
 
@@ -76,7 +92,8 @@ mvn clean install
 mvn spring-boot:run
 ```
 
-The backend will start on `http://localhost:8080`
+The backend will start on `http://localhost:8080`.
+> **Note:** SSL is disabled by default for local development to avoid self-signed certificate issues. To enable production-grade security, update `application.properties`.
 
 ### 3. Analytics Service Setup
 
@@ -120,41 +137,223 @@ To stop all services:
 stop_all.bat
 ```
 
+## 🐳 Docker Deployment (Recommended)
+
+To run the entire system in isolated containers:
+
+```bash
+docker-compose up --build
+```
+
+This will automatically start:
+- **MySQL Database**: Port 3306
+- **Backend API**: Port 8080
+- **Frontend Dashboard**: Port 5173
+- **Analytics Service**: Port 4242
+
+## 📱 Mobile App (APK) Generation
+
+The frontend is optimized for mobile conversion using **Capacitor**. To generate an Android APK:
+
+1. **Install Capacitor**:
+   ```bash
+   cd frontend-dashboard
+   npm install @capacitor/core @capacitor/cli
+   npx cap init
+   ```
+2. **Setup Android**:
+   ```bash
+   npm run build
+   npm install @capacitor/android
+   npx cap add android
+   ```
+3. **Build APK**:
+   Open the `android` folder in Android Studio and use **Build > Build APK**.
+   *Link your local backend by updating the API URL to your machine's IP address (e.g. http://192.168.x.x:8080).*
+
+To stop the containers:
+```bash
+docker-compose down
+```
+
 ## 👥 Default Users
 
 ### Doctor
 - Username: `doctor_micheal`
-- Password: `password`
+- Password: `<your-password>`
 
 ### Nurse
 - Username: `nurse_sarah`
-- Password: `password`
+- Password: `<your-password>`
 
 ### Patients
 - Username: `patient_001` to `patient_035`
-- Password: `password`
+- Password: `<your-password>`
 
-## 📊 System Architecture
+## 🏗️ System Architecture
 
+```mermaid
+graph TB
+    subgraph "Client Layer"
+        WEB[Web Browser<br/>React + Vite]
+        MOBILE[Mobile Device<br/>Responsive UI]
+    end
+
+    subgraph "Frontend - Port 5173"
+        DASHBOARD[Dashboard Component]
+        VITALS[Vitals Monitor]
+        CONSENT[Consent Management]
+        IMAGES[Image Transfer]
+        APPT[Appointments System]
+    end
+
+    subgraph "Backend - Port 8080"
+        API[Spring Boot REST API]
+        
+        subgraph "Controllers"
+            AUTH[Auth Controller]
+            SENSOR[Sensor Controller]
+            CONS[Consent Controller]
+            DOC[Doctor Controller]
+            PAT[Patient Controller]
+        end
+        
+        subgraph "Services"
+            USERSVC[User Service]
+            SENSVC[Sensor Service]
+            CONSVC[Consent Service]
+            DOCAVSVC[Availability Service]
+            APPTSVC[Appointment Service]
+            IPFSSVC[IPFS Service]
+            BLOCKSVC[Blockchain Service]
+            LOCKSVC[Lockdown Service]
+        end
+        
+        subgraph "Security"
+            SECCONF[Security Config]
+            ABE[ABE Encryption]
+            ECDH[ECDH Encryption]
+        end
+    end
+
+    subgraph "Analytics - Port 4242"
+        FASTAPI[FastAPI Service]
+        CHARM[Charm-Crypto ABE]
+        IMGPROC[Image Processing]
+    end
+
+    subgraph "Data Layer"
+        MYSQL[(MySQL Database<br/>medical_iot_db)]
+        IPFS[IPFS Storage<br/>Decentralized]
+        BLOCKCHAIN[Blockchain Ledger<br/>Audit Trail]
+    end
+
+    subgraph "Database Tables"
+        USERS["users<br/>(id, username, password, role<br/>fullName, age, gender, dept)"]
+        SENSORS[sensor_data]
+        CONSENTS[consent_records]
+        SECURITY[security_events]
+        DOCAVAIL[doctor_availability]
+        APPOINTMENTS[appointments]
+    end
+
+    subgraph "External Systems"
+        WEBSOCKET[WebSocket<br/>Real-time Updates]
+        NOTIF[Browser Notifications]
+    end
+
+    %% Client to Frontend
+    WEB --> DASHBOARD
+    MOBILE --> DASHBOARD
+    
+    %% Frontend Components
+    DASHBOARD --> VITALS
+    DASHBOARD --> CONSENT
+    DASHBOARD --> IMAGES
+    DASHBOARD --> APPT
+    
+    %% Frontend to Backend
+    VITALS --> API
+    CONSENT --> API
+    IMAGES --> API
+    APPT --> API
+    
+    %% API to Controllers
+    API --> AUTH
+    API --> SENSOR
+    API --> CONS
+    API --> DOC
+    API --> PAT
+    
+    %% Controllers to Services
+    AUTH --> USERSVC
+    SENSOR --> SENSVC
+    CONS --> CONSVC
+    DOC --> DOCAVSVC
+    DOC --> APPTSVC
+    PAT --> APPTSVC
+    
+    %% Services to Security
+    SENSVC --> ABE
+    IMAGES -.-> ECDH
+    CONSVC --> BLOCKSVC
+    APPTSVC --> BLOCKSVC
+    
+    %% Services to Data
+    USERSVC --> MYSQL
+    SENSVC --> MYSQL
+    CONSVC --> MYSQL
+    DOCAVSVC --> MYSQL
+    APPTSVC --> MYSQL
+    LOCKSVC --> MYSQL
+    
+    %% Backend to Analytics
+    ABE --> FASTAPI
+    ECDH --> FASTAPI
+    FASTAPI --> CHARM
+    FASTAPI --> IMGPROC
+    
+    %% Services to External Storage
+    IPFSSVC --> IPFS
+    BLOCKSVC --> BLOCKCHAIN
+    
+    %% Database Tables
+    MYSQL --> USERS
+    MYSQL --> SENSORS
+    MYSQL --> CONSENTS
+    MYSQL --> SECURITY
+    MYSQL --> DOCAVAIL
+    MYSQL --> APPOINTMENTS
+    
+    %% Real-time Features
+    SENSVC -.-> WEBSOCKET
+    WEBSOCKET -.-> DASHBOARD
+    DASHBOARD -.-> NOTIF
+    
+    %% Styling
+    classDef frontend fill:#61dafb,stroke:#333,stroke-width:2px,color:#000
+    classDef backend fill:#6db33f,stroke:#333,stroke-width:2px,color:#fff
+    classDef analytics fill:#3776ab,stroke:#333,stroke-width:2px,color:#fff
+    classDef database fill:#00758f,stroke:#333,stroke-width:2px,color:#fff
+    classDef security fill:#ff6b6b,stroke:#333,stroke-width:2px,color:#fff
+    
+    class DASHBOARD,VITALS,CONSENT,IMAGES,APPT frontend
+    class API,AUTH,SENSOR,CONS,DOC,PAT,USERSVC,SENSVC,CONSVC,DOCAVSVC,APPTSVC backend
+    class FASTAPI,CHARM,IMGPROC analytics
+    class MYSQL,IPFS,BLOCKCHAIN,USERS,SENSORS,CONSENTS,SECURITY,DOCAVAIL,APPOINTMENTS database
+    class SECCONF,ABE,ECDH,IPFSSVC,BLOCKSVC,LOCKSVC security
 ```
-┌─────────────────┐
-│  React Frontend │ (Port 5173)
-└────────┬────────┘
-         │
-         ├─────────────────────────┐
-         │                         │
-┌────────▼────────┐      ┌─────────▼──────────┐
-│  Spring Boot    │◄────►│  Python Analytics  │
-│    Backend      │      │     Service        │
-│  (Port 8080)    │      │   (Port 4242)      │
-└────────┬────────┘      └────────────────────┘
-         │
-         ├──────────┬──────────┬──────────┐
-         │          │          │          │
-    ┌───▼───┐  ┌───▼───┐  ┌───▼───┐  ┌──▼──┐
-    │ MySQL │  │  ABE  │  │ IPFS  │  │ BC  │
-    └───────┘  └───────┘  └───────┘  └─────┘
-```
+
+### Key Components:
+
+- **Frontend (React)**: Multi-tab dashboard with real-time monitoring
+- **Backend (Spring Boot)**: RESTful API with comprehensive security
+- **Analytics (Python)**: ABE encryption and image processing
+- **Database (MySQL)**: Persistent storage for all entities
+- **IPFS**: Decentralized storage for encrypted records
+- **Blockchain**: Immutable audit trail for compliance
+
+
 
 ## 🔐 Security Features
 
@@ -194,16 +393,16 @@ stop_all.bat
 ### Appointment System (NEW)
 
 #### Doctor Endpoints
-- `POST /api/doctor/set-availability` - Set doctor availability slots
-- `GET /api/doctor/{doctorId}/slots` - Get available slots for a doctor
+- `POST /api/doctor/set-availability` - Set recurring weekly office hours (e.g., MONDAY 10:00-18:00)
+- `GET /api/doctor/{doctorId}/slots` - Get office hours for a doctor
 - `GET /api/doctor/appointments` - Get all appointments for a doctor
 - `POST /api/doctor/appointments/{appointmentId}/complete` - Mark appointment as completed
-- `POST /api/doctor/slots/{slotId}/cancel` - Cancel an availability slot
+- `POST /api/doctor/slots/{slotId}/cancel` - Remove an office hour entry
 
 #### Patient Endpoints
 - `GET /api/patient/all-doctors` - Get list of all doctors
-- `GET /api/patient/all-doctors/{doctorId}/slots` - View available slots for a doctor
-- `POST /api/patient/book-appointment/{slotId}` - Book an appointment
+- `GET /api/patient/all-doctors/{doctorId}/slots` - View doctor office hours
+- `POST /api/patient/book-appointment` - Book an appointment for a specific date/time
 - `GET /api/patient/appointments` - Get all patient appointments
 - `POST /api/patient/appointments/{appointmentId}/cancel` - Cancel an appointment
 
@@ -239,32 +438,29 @@ python mock_data_generator.py
 2. Login as patient → Approve/reject request
 3. Login as doctor → View patient data (if approved)
 
-### Test Appointment System (NEW)
-1. **Doctor sets availability**:
+### Test Appointment System (Refactored)
+1. **Doctor sets office hours**:
    ```bash
    curl -X POST http://localhost:8080/api/doctor/set-availability \
      -H "Content-Type: application/json" \
      -H "X-User-Id: doctor_micheal" \
-     -d '{"fromTime": "2025-06-29T09:00:00", "toTime": "2025-06-29T17:00:00"}'
+     -d '{"dayOfWeek": "MONDAY", "startTime": "10:00:00", "endTime": "18:00:00"}'
    ```
 
-2. **Patient views available doctors**:
-   ```bash
-   curl http://localhost:8080/api/patient/all-doctors
-   ```
-
-3. **Patient views doctor slots**:
+2. **Patient views doctor hours**:
    ```bash
    curl http://localhost:8080/api/patient/all-doctors/doctor_micheal/slots
    ```
 
-4. **Patient books appointment**:
+3. **Patient books appointment**:
    ```bash
-   curl -X POST http://localhost:8080/api/patient/book-appointment/1 \
-     -H "X-User-Id: patient_alpha"
+   curl -X POST http://localhost:8080/api/patient/book-appointment \
+     -H "Content-Type: application/json" \
+     -H "X-User-Id: patient_001" \
+     -d '{"doctorId": 1, "appointmentTime": "2025-06-30T10:30:00"}'
    ```
 
-5. **Doctor completes appointment**:
+4. **Doctor completes appointment**:
    ```bash
    curl -X POST http://localhost:8080/api/doctor/appointments/1/complete \
      -H "X-User-Id: doctor_micheal"
@@ -285,16 +481,11 @@ This is an academic project for demonstration purposes. Feel free to fork and ex
 
 This project is for educational purposes only.
 
-## 👨‍💻 Author
+## 👨‍💻 Authors (Project Team)
 
-**Malcolm Cephas**
-- GitHub: [@malcolm-cephas](https://github.com/malcolm-cephas)
-  
-**Shalini Sinha**
-- GitHub: [@Shalini-git-hub](https://github.com/Shalini-git-hub)
-  
-**A B Vishvajeeth**
-- GitHub: [@ABVishvajeeth](https://github.com/ABVishvajeeth) 
+- **Team Member 1**
+- **Team Member 2**
+- **Team Member 3** 
 
 ## 🙏 Acknowledgments
 

@@ -31,16 +31,17 @@ public class DoctorController {
             @RequestHeader("X-User-Id") String doctorId,
             @RequestBody AvailabilityDto dto) {
         try {
-            DoctorAvailability availability = availabilityService.setAvailability(doctorId, dto);
+            List<DoctorAvailability> availabilities = availabilityService.setAvailability(doctorId, dto);
             return ResponseEntity.ok(Map.of(
-                    "message", "Availability set successfully",
-                    "slot", availability));
+                    "message", "Availability set successfully for " + availabilities.size() + " days",
+                    "slots", availabilities));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of(
                     "error", e.getMessage(),
                     "example", Map.of(
-                            "fromTime", "2025-06-29T09:00:00",
-                            "toTime", "2025-06-29T17:00:00")));
+                            "dayOfWeek", "MONDAY",
+                            "startTime", "10:00:00",
+                            "endTime", "20:00:00")));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
         }

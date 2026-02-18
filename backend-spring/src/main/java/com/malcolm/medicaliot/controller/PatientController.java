@@ -35,7 +35,8 @@ public class PatientController {
         if (search.isEmpty()) {
             patientPage = userRepository.findByRole("PATIENT", PageRequest.of(page, size));
         } else {
-            patientPage = userRepository.findByRoleAndUsernameContainingIgnoreCase("PATIENT", search,
+            // Updated to search by username OR full name
+            patientPage = userRepository.searchByRoleAndName("PATIENT", search,
                     PageRequest.of(page, size));
         }
 
@@ -44,6 +45,9 @@ public class PatientController {
             summary.put("id", user.getId());
             summary.put("username", user.getUsername());
             summary.put("department", user.getDepartment());
+            summary.put("fullName", user.getFullName());
+            summary.put("age", user.getAge());
+            summary.put("gender", user.getGender());
 
             // Get latest vitals for summary directly from DB
             java.util.Optional<SensorData> latestOpt = sensorDataRepository

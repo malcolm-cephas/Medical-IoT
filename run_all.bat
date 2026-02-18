@@ -1,47 +1,33 @@
 @echo off
-title Medical IoT System Launcher
-cls
-echo ===================================================
-echo   MEDICAL IOT SYSTEM - LAUNCHER
-echo ===================================================
+setlocal
 
-echo.
-echo [CHECK] Ensuring MySQL requirements...
-echo Attempting to start MySQL Service (Requires Admin)...
-net start MySQL80 || echo [WARN] Could not start MySQL via script. Please ensure it is running manually.
+:: Create Log directory if it doesn't exist
+if not exist "Logs" mkdir "Logs"
 
-echo.
-echo [1/3] Starting Python Analytics Service (Port 4242)...
-start "Python Analytics" cmd /k "cd analytics-python && echo Installing dependencies... && pip install -r requirements.txt && echo Starting FastAPI... && uvicorn main:app --reload --port 4242 || pause"
+:: Clear existing logs
+type nul > Logs\backend.log
+type nul > Logs\frontend.log
+type nul > Logs\analytics.log
 
-echo.
-echo [2/3] Starting Spring Boot Backend...
-start "Spring Boot Backend" cmd /k "cd backend-spring && echo Building... && mvn clean package -DskipTests && echo Starting JAR... && java -jar target/medical-iot-0.0.1-SNAPSHOT.jar || pause"
+:: Start Applications
+echo ===========================================
+echo Starting Medical IoT System v2.0
+echo ===========================================
 
-echo.
-echo [3/3] Starting Frontend Dashboard...
-start "Frontend Dashboard" cmd /k "cd frontend-dashboard && echo Installing dependencies... && npm install && echo Starting Vite... && npm run dev || pause"
+echo [1/3] Starting Analytics Service (Port 4242)...
+start "Analytics Service (Port 4242)" powershell -NoExit -Command "cd 'analytics-python'; python -m pip install -r requirements.txt; python -m uvicorn main:app --reload --port 4242 2>&1 | Tee-Object -FilePath '..\Logs\analytics.log'"
 
-echo.
-echo ===================================================
-echo   SYSTEM LAUNCHED SUCCESSFULLY
-echo ===================================================
-echo Services are starting in separate windows:
-echo  - Frontend:  http://localhost:5173
-echo  - Backend:   http://localhost:8080
-echo  - Analytics: http://localhost:4242
-echo  - Validating: MySQL Connection (Check Backend Logs)
-echo ===================================================
-echo.
-echo NEW FEATURES AVAILABLE:
-echo  - Doctor-Patient Appointments (Click Appointments Tab)
-echo  - Doctors: Set availability and manage appointments
-echo  - Patients: Browse doctors and book appointments
-echo.
-echo QUICK START:
-echo  1. Login as doctor_micheal to set availability
-echo  2. Login as patient_alpha to book appointments
-echo  3. Check the Appointments tab in the dashboard
-echo ===================================================
-echo Press any key to exit this launcher (Services will keep running)...
-pause >nul
+echo [2/3] Starting Spring Backend (Port 8080)...
+start "Spring Backend (Port 8080)" powershell -NoExit -Command "cd 'backend-spring'; mvn spring-boot:run 2>&1 | Tee-Object -FilePath '..\Logs\backend.log'"
+
+echo [3/3] Starting React Frontend (Port 5173)...
+start "React Frontend (Port 5173)" powershell -NoExit -Command "cd 'frontend-dashboard'; npm install; npm run dev 2>&1 | Tee-Object -FilePath '..\Logs\frontend.log'"
+
+:: Start Log Monitor
+start "Log Monitor" powershell -NoExit -ExecutionPolicy Bypass -File "monitor_logs.ps1"
+
+echo ===========================================
+echo All services launching...
+echo Check Logs folder for detailed output.
+echo ===========================================
+pause

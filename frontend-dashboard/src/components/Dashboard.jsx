@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import SockJS from 'sockjs-client';
 import Stomp from 'stompjs';
@@ -20,6 +21,8 @@ import ConsentManagement from './ConsentManagement';
 import PatientStatistics from './PatientStatistics';
 import AppointmentBooking from './AppointmentBooking';
 import DoctorAvailability from './DoctorAvailability';
+import SecurityAudit from './SecurityAudit';
+import SystemActivities from './SystemActivities';
 
 ChartJS.register(
   CategoryScale,
@@ -31,9 +34,12 @@ ChartJS.register(
   Legend
 );
 
-const Dashboard = ({ user, theme, toggleTheme }) => {
-  const [patientId, setPatientId] = useState('patient_001'); // Default to first mock patient
-  const [viewMode, setViewMode] = useState(user.role === 'patient' ? 'detail' : 'list');
+const Dashboard = ({ user, theme, toggleTheme, forceDetail }) => {
+  const { patientId: urlPatientId } = useParams();
+  const navigate = useNavigate();
+
+  const [patientId, setPatientId] = useState(urlPatientId || (user.role === 'patient' ? user.username : 'patient_001'));
+  const [viewMode, setViewMode] = useState(forceDetail || urlPatientId || user.role === 'patient' ? 'detail' : 'list');
   const [activeTab, setActiveTab] = useState('vitals'); // vitals, consent, images, appointments
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -64,6 +70,16 @@ const Dashboard = ({ user, theme, toggleTheme }) => {
       }
     }
   }, [history, notificationsEnabled, patientId, viewMode]);
+
+  // Synchronize state with URL changes
+  useEffect(() => {
+    if (urlPatientId) {
+      setPatientId(urlPatientId);
+      setViewMode('detail');
+    } else if (user.role !== 'patient' && !forceDetail) {
+      setViewMode('list');
+    }
+  }, [urlPatientId, user.role, forceDetail]);
 
   // If role is patient, they can only see themselves
   useEffect(() => {
@@ -126,7 +142,9 @@ const Dashboard = ({ user, theme, toggleTheme }) => {
   }, [patientId, notificationsEnabled, user.role]);
 
   const handleLogout = () => {
-    window.location.href = '/'; // Simple reload to clear state
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    window.location.href = '/';
   };
 
   // Chart Configuration
@@ -404,14 +422,15 @@ const Dashboard = ({ user, theme, toggleTheme }) => {
       <main>
         <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <h2>{user.role === 'doctor' ? 'Doctor Dashboard' : user.role === 'nurse' ? 'Nurse Station' : 'My Health Vitals'}</h2>
+            <h2>{user.role === 'doctor' ? 'Doctor Dashboard' : user.role === 'nurse' ? 'Nurse Station' : user.role === 'admin' ? 'System Administrator' : 'My Health Vitals'}</h2>
             <p style={{ color: 'var(--text-secondary)' }}>
               {user.role === 'doctor' ? 'Select a patient to view real-time records.' :
                 user.role === 'nurse' ? 'Monitoring ward stations.' :
-                  'View your real-time health statistics.'}
+                  user.role === 'admin' ? 'System Overview and Logs.' :
+                    'View your real-time health statistics.'}
             </p>
           </div>
-          {(user.role === 'doctor' || user.role === 'nurse') && viewMode === 'detail' && (
+          {(user.role === 'doctor' || user.role === 'nurse' || user.role === 'admin') && viewMode === 'detail' && (
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button
                 onClick={exportPatientData}
@@ -421,7 +440,7 @@ const Dashboard = ({ user, theme, toggleTheme }) => {
                 📥 Export CSV
               </button>
               <button
-                onClick={() => setViewMode('list')}
+                onClick={() => navigate('/dashboard')}
                 className="btn-secondary"
                 style={{ padding: '0.5rem 1rem' }}
               >
@@ -503,6 +522,40 @@ const Dashboard = ({ user, theme, toggleTheme }) => {
           >
             📅 Appointments
           </button>
+          <button
+            className={`tab-btn ${activeTab === 'security' ? 'active' : ''}`}
+            onClick={() => setActiveTab('security')}
+            style={{
+              padding: '0.5rem 1rem',
+              border: 'none',
+              background: activeTab === 'security' ? 'var(--accent-color)' : 'transparent',
+              color: activeTab === 'security' ? 'white' : 'var(--text-secondary)',
+              borderRadius: '8px 8px 0 0',
+              cursor: 'pointer',
+              fontWeight: activeTab === 'security' ? '600' : '400',
+              transition: 'all 0.3s ease'
+            }}
+          >
+            🛡️ Security Audit
+          </button>
+          {user.role === 'admin' && (
+            <button
+              className={`tab-btn ${activeTab === 'activities' ? 'active' : ''}`}
+              onClick={() => setActiveTab('activities')}
+              style={{
+                padding: '0.5rem 1rem',
+                border: 'none',
+                background: activeTab === 'activities' ? 'var(--accent-color)' : 'transparent',
+                color: activeTab === 'activities' ? 'white' : 'var(--text-secondary)',
+                borderRadius: '8px 8px 0 0',
+                cursor: 'pointer',
+                fontWeight: activeTab === 'activities' ? '600' : '400',
+                transition: 'all 0.3s ease'
+              }}
+            >
+              🕵️ System Logs
+            </button>
+          )}
         </div>
 
         {/* Appointments Tab */}
@@ -518,7 +571,7 @@ const Dashboard = ({ user, theme, toggleTheme }) => {
 
         {/* Consent Tab */}
         {activeTab === 'consent' && (
-          <ConsentManagement currentUser={user} theme={theme} />
+          <ConsentManagement patientId={patientId} currentUser={user} theme={theme} />
         )}
 
         {/* Images Tab */}
@@ -526,21 +579,30 @@ const Dashboard = ({ user, theme, toggleTheme }) => {
           <SecureImageTransfer currentUser={user} theme={theme} />
         )}
 
+        {/* Security Audit Tab */}
+        {activeTab === 'security' && (
+          <SecurityAudit theme={theme} />
+        )}
+
+        {/* System Activities Tab */}
+        {activeTab === 'activities' && user.role === 'admin' && (
+          <SystemActivities theme={theme} />
+        )}
+
         {/* Vitals Tab (existing content) */}
         {activeTab === 'vitals' && (
           <>
 
 
-            {/* Ward Monitoring List (Only for Doctor/Nurse in List Mode) */}
-            {(user.role === 'doctor' || user.role === 'nurse') && viewMode === 'list' && (
+            {/* Ward Monitoring List (Only for Doctor/Nurse/Admin in List Mode) */}
+            {(user.role === 'doctor' || user.role === 'nurse' || user.role === 'admin') && viewMode === 'list' && (
               <>
                 <PatientStatistics theme={theme} />
                 <PatientVitalList
                   theme={theme}
                   currentUser={user}
                   onSelectPatient={(id) => {
-                    setPatientId(id);
-                    setViewMode('detail');
+                    navigate(`/patient/${id}`);
                   }}
                 />
               </>
@@ -549,19 +611,19 @@ const Dashboard = ({ user, theme, toggleTheme }) => {
             {/* Detailed Patient View */}
             {viewMode === 'detail' && (
               <>
-                {/* Patient Selection (Only for Doctor/Nurse) */}
-                {(user.role === 'doctor' || user.role === 'nurse') && (
+                {/* Patient Selection (Only for Doctor/Nurse/Admin) */}
+                {(user.role === 'doctor' || user.role === 'nurse' || user.role === 'admin') && (
                   <div className="form-group" style={{ maxWidth: '300px' }}>
                     <label>Monitor Patient ID:</label>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                       <input
                         type="text"
                         value={patientId}
-                        onChange={(e) => setPatientId(e.target.value)}
+                        onChange={(e) => navigate(`/patient/${e.target.value}`)}
                         placeholder="Enter ID"
                       />
                       <select
-                        onChange={(e) => setPatientId(e.target.value)}
+                        onChange={(e) => navigate(`/patient/${e.target.value}`)}
                         style={{
                           padding: '0.5rem',
                           borderRadius: '4px',

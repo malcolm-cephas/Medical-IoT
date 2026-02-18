@@ -4,58 +4,73 @@ import com.malcolm.medicaliot.dto.AvailabilityDto;
 import com.malcolm.medicaliot.model.DoctorAvailability;
 import com.malcolm.medicaliot.repository.DoctorAvailabilityRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class DoctorAvailabilityService {
 
     @Autowired
-    private DoctorAvailabilityRepository availabilityRepository;
+    private DoctorAvailabilityRepository repository;
 
-    public DoctorAvailability setAvailability(String doctorId, AvailabilityDto dto) {
-        // Validate time range
-        if (dto.getToTime().isBefore(dto.getFromTime()) || dto.getToTime().isEqual(dto.getFromTime())) {
-            throw new IllegalArgumentException("End time must be after start time");
+    @Autowired
+    private com.malcolm.medicaliot.repository.UserRepository userRepository;
+
+    public List<DoctorAvailability> setAvailability(String username, AvailabilityDto dto) {
+        com.malcolm.medicaliot.model.User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Doctor not found: " + username));
+        Long doctorId = user.getId();
+        java.util.List<DoctorAvailability> savedSchedules = new java.util.ArrayList<>();
+
+        if (dto.getDaysOfWeek() != null && !dto.getDaysOfWeek().isEmpty()) {
+            for (String day : dto.getDaysOfWeek()) {
+                DoctorAvailability availability = new DoctorAvailability(
+                        doctorId,
+                        day,
+                        dto.getStartTime(),
+                        dto.getEndTime());
+                savedSchedules.add(repository.save(availability));
+            }
+        } else if (dto.getDayOfWeek() != null) {
+            DoctorAvailability availability = new DoctorAvailability(
+                    doctorId,
+                    dto.getDayOfWeek(),
+                    dto.getStartTime(),
+                    dto.getEndTime());
+            savedSchedules.add(repository.save(availability));
         }
-
-        DoctorAvailability availability = new DoctorAvailability();
-        availability.setDoctorId(doctorId);
-        availability.setFromTime(dto.getFromTime());
-        availability.setToTime(dto.getToTime());
-        availability.setStatus("AVAILABLE");
-
-        return availabilityRepository.save(availability);
+        return savedSchedules;
     }
 
-    public List<DoctorAvailability> getAvailableSlots(String doctorId) {
-        return availabilityRepository.findByDoctorIdAndStatusAndFromTimeAfter(
-                doctorId, "AVAILABLE", LocalDateTime.now());
-    }
-
-    public List<DoctorAvailability> getAllAvailableSlots() {
-        return availabilityRepository.findByStatus("AVAILABLE");
-    }
-
-    public DoctorAvailability markSlotAsBooked(Long slotId) {
-        DoctorAvailability slot = availabilityRepository.findById(slotId)
-                .orElseThrow(() -> new RuntimeException("Slot not found"));
-
-        if (!"AVAILABLE".equals(slot.getStatus())) {
-            throw new RuntimeException("Slot is not available");
-        }
-
-        slot.setStatus("BOOKED");
-        return availabilityRepository.save(slot);
+    public List<DoctorAvailability> getAvailableSlots(String username) {
+        com.malcolm.medicaliot.model.User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Doctor not found: " + username));
+        return repository.findByDoctorId(user.getId());
     }
 
     public DoctorAvailability cancelSlot(Long slotId) {
-        DoctorAvailability slot = availabilityRepository.findById(slotId)
-                .orElseThrow(() -> new RuntimeException("Slot not found"));
+        if (slotId == null)
+            throw new IllegalArgumentException("Slot ID cannot be null");
+        DoctorAvailability slot = repository.findById(slotId)
+                .orElseThrow(() -> new RuntimeException("Schedule/Slot not found"));
 
-        slot.setStatus("CANCELLED");
-        return availabilityRepository.save(slot);
+        repository.delete(slot);
+        return slot;
+    }
+
+    // Legacy support or internal use
+    public Optional<DoctorAvailability> findById(Long id) {
+        if (id == null)
+            return Optional.empty();
+        return repository.findById(id);
+    }
+
+    public DoctorAvailability save(DoctorAvailability slot) {
+        if (slot == null)
+            throw new IllegalArgumentException("Slot cannot be null");
+        return repository.save(slot);
     }
 }

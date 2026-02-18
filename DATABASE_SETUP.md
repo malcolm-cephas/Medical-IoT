@@ -11,7 +11,7 @@ The application is configured with `createDatabaseIfNotExist=true`, so the datab
 
 **Default Credentials:**
 - Username: `root`
-- Password: `password`
+- Password: `<your-password>` (as configured in your local MySQL)
 
 ### Option 2: Manual Setup
 If you prefer to create the database manually:
@@ -20,10 +20,15 @@ If you prefer to create the database manually:
 CREATE DATABASE medical_iot_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-## Configuration
+### Option 3: Environment Variables (.env) - RECOMMENDED
+The most secure way to handle credentials is via the `.env` file in the project root:
+
+1. Open `.env` in the root directory.
+2. Update `DB_USERNAME` and `DB_PASSWORD`.
+3. The Spring Boot application will automatically pick these up via `application.properties`.
 
 ### Custom MySQL Credentials
-If your MySQL has different credentials, update `application.properties`:
+If you prefer not to use `.env`, you can directly update `backend-spring/src/main/resources/application.properties`:
 
 ```properties
 spring.datasource.username=your_username
@@ -40,9 +45,9 @@ The application uses Hibernate's `ddl-auto=update` mode, which will:
 The system will automatically create the following tables:
 - `users` - User accounts (doctors, nurses, patients, admin)
 - `sensor_data` - Patient vital signs with timestamps
-- `patient_consent` - Consent management records
-- `security_event` - Security audit logs
-
+- ` - Security audit logs
+`patient_consent` - Consent management records
+- `security_event
 ## Verification
 
 After starting the application, verify the database:

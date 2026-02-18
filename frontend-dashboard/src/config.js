@@ -1,13 +1,11 @@
 export const getBackendUrl = () => {
     const hostname = window.location.hostname;
-    // If we're on localhost, assume backend is on 8080. 
-    // If we're on a network IP, use that same IP with 8080.
-    return `http://${hostname}:8080`;
+    const port = import.meta.env.VITE_BACKEND_PORT || '8080';
+    return `http://${hostname}:${port}`;
 };
 
 export const getAnalyticsUrl = () => {
     const hostname = window.location.hostname;
-    // Python service is usually on 4242 or 8000. 
-    // Based on the code, it seems to expect 4242 in many places.
-    return `http://${hostname}:4242`;
+    const port = import.meta.env.VITE_ANALYTICS_PORT || '4242';
+    return `http://${hostname}:${port}`;
 };

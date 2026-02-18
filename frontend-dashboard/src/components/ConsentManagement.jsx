@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { getBackendUrl } from '../config';
 
-const ConsentManagement = ({ patientId, theme }) => {
+const ConsentManagement = ({ patientId, currentUser, theme }) => {
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        fetchConsentRequests();
+        if (patientId) {
+            fetchConsentRequests();
+        }
     }, [patientId]);
 
     const fetchConsentRequests = async () => {
@@ -40,12 +42,15 @@ const ConsentManagement = ({ patientId, theme }) => {
     const approvedRequests = requests.filter(r => r.status === 'APPROVED');
     const rejectedRequests = requests.filter(r => r.status === 'REJECTED');
 
+    const isPatient = currentUser && currentUser.role === 'patient';
+    const isOwner = currentUser && (currentUser.username === patientId || currentUser.id === patientId);
+
     return (
         <div className="card" style={{ marginTop: '2rem' }}>
             <div className="card-header">
                 <h2>🔐 Access Consent Management</h2>
                 <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
-                    Manage who can access your medical data
+                    {isPatient ? 'Manage who can access your medical data' : `Consent status for Patient: ${patientId}`}
                 </p>
             </div>
 
@@ -74,41 +79,46 @@ const ConsentManagement = ({ patientId, theme }) => {
                                         }}
                                     >
                                         <div>
-                                            <strong style={{ fontSize: '1rem' }}>{request.doctorId}</strong>
+                                            <strong style={{ fontSize: '1rem' }}>Doctor: {request.doctorId}</strong>
                                             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
                                                 Requested: {new Date(request.requestedAt).toLocaleString()}
                                             </p>
                                         </div>
-                                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                            <button
-                                                onClick={() => respondToRequest(request.id, 'APPROVED')}
-                                                style={{
-                                                    padding: '0.5rem 1rem',
-                                                    background: 'var(--success-color)',
-                                                    color: 'white',
-                                                    border: 'none',
-                                                    borderRadius: '4px',
-                                                    cursor: 'pointer',
-                                                    fontWeight: 'bold'
-                                                }}
-                                            >
-                                                ✓ Approve
-                                            </button>
-                                            <button
-                                                onClick={() => respondToRequest(request.id, 'REJECTED')}
-                                                style={{
-                                                    padding: '0.5rem 1rem',
-                                                    background: 'var(--danger-color)',
-                                                    color: 'white',
-                                                    border: 'none',
-                                                    borderRadius: '4px',
-                                                    cursor: 'pointer',
-                                                    fontWeight: 'bold'
-                                                }}
-                                            >
-                                                ✗ Reject
-                                            </button>
-                                        </div>
+                                        {isPatient && isOwner && (
+                                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                                <button
+                                                    onClick={() => respondToRequest(request.id, 'APPROVED')}
+                                                    style={{
+                                                        padding: '0.5rem 1rem',
+                                                        background: 'var(--success-color)',
+                                                        color: 'white',
+                                                        border: 'none',
+                                                        borderRadius: '4px',
+                                                        cursor: 'pointer',
+                                                        fontWeight: 'bold'
+                                                    }}
+                                                >
+                                                    ✓ Approve
+                                                </button>
+                                                <button
+                                                    onClick={() => respondToRequest(request.id, 'REJECTED')}
+                                                    style={{
+                                                        padding: '0.5rem 1rem',
+                                                        background: 'var(--danger-color)',
+                                                        color: 'white',
+                                                        border: 'none',
+                                                        borderRadius: '4px',
+                                                        cursor: 'pointer',
+                                                        fontWeight: 'bold'
+                                                    }}
+                                                >
+                                                    ✗ Reject
+                                                </button>
+                                            </div>
+                                        )}
+                                        {(!isPatient || !isOwner) && (
+                                            <span style={{ fontSize: '0.9rem', color: 'orange', fontWeight: 'bold' }}>PENDING</span>
+                                        )}
                                     </div>
                                 ))}
                             </div>
@@ -136,25 +146,27 @@ const ConsentManagement = ({ patientId, theme }) => {
                                         }}
                                     >
                                         <div>
-                                            <strong>{request.doctorId}</strong>
+                                            <strong>Doctor: {request.doctorId}</strong>
                                             <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginLeft: '1rem' }}>
                                                 Approved: {new Date(request.approvedAt).toLocaleString()}
                                             </span>
                                         </div>
-                                        <button
-                                            onClick={() => respondToRequest(request.id, 'REJECTED')}
-                                            style={{
-                                                padding: '0.3rem 0.6rem',
-                                                background: 'transparent',
-                                                color: 'var(--danger-color)',
-                                                border: '1px solid var(--danger-color)',
-                                                borderRadius: '4px',
-                                                cursor: 'pointer',
-                                                fontSize: '0.8rem'
-                                            }}
-                                        >
-                                            Revoke
-                                        </button>
+                                        {isPatient && isOwner && (
+                                            <button
+                                                onClick={() => respondToRequest(request.id, 'REJECTED')}
+                                                style={{
+                                                    padding: '0.3rem 0.6rem',
+                                                    background: 'transparent',
+                                                    color: 'var(--danger-color)',
+                                                    border: '1px solid var(--danger-color)',
+                                                    borderRadius: '4px',
+                                                    cursor: 'pointer',
+                                                    fontSize: '0.8rem'
+                                                }}
+                                            >
+                                                Revoke
+                                            </button>
+                                        )}
                                     </div>
                                 ))}
                             </div>
@@ -179,7 +191,7 @@ const ConsentManagement = ({ patientId, theme }) => {
                                             opacity: 0.7
                                         }}
                                     >
-                                        <strong>{request.doctorId}</strong>
+                                        <strong>Doctor: {request.doctorId}</strong>
                                         <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginLeft: '1rem' }}>
                                             Rejected
                                         </span>

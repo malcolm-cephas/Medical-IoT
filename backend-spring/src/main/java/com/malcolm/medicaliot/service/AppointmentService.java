@@ -2,14 +2,12 @@ package com.malcolm.medicaliot.service;
 
 import com.malcolm.medicaliot.model.Appointment;
 import com.malcolm.medicaliot.model.DoctorAvailability;
-import com.malcolm.medicaliot.model.User;
 import com.malcolm.medicaliot.repository.AppointmentRepository;
-import com.malcolm.medicaliot.repository.UserRepository;
+import com.malcolm.medicaliot.repository.DoctorAvailabilityRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -20,86 +18,135 @@ public class AppointmentService {
     private AppointmentRepository appointmentRepository;
 
     @Autowired
-    private DoctorAvailabilityService availabilityService;
+    private SystemLogService logService;
 
     @Autowired
-    private UserRepository userRepository;
+    private DoctorAvailabilityRepository availabilityRepository;
 
     @Transactional
-    public Map<String, Object> bookAppointment(Long slotId, String patientId) {
-        // Get the slot and mark it as booked
-        DoctorAvailability slot = availabilityService.markSlotAsBooked(slotId);
+    public Map<String, Object> bookAppointment(Long doctorId, String patientIdStr,
+            java.time.LocalDateTime appointmentTime) {
+        Long patientId = Long.parseLong(patientIdStr);
 
-        // Create the appointment
-        Appointment appointment = new Appointment();
-        appointment.setDoctorId(slot.getDoctorId());
-        appointment.setPatientId(patientId);
-        appointment.setSlotId(slotId);
-        appointment.setStatus("SCHEDULED");
-        appointment.setAppointmentTime(slot.getFromTime());
+        // 1. Check if doctor has office hours on this day of week
+        String dayOfWeek = appointmentTime.getDayOfWeek().toString();
+        List<DoctorAvailability> schedule = availabilityRepository.findByDoctorIdAndDayOfWeek(doctorId, dayOfWeek);
 
-        Appointment savedAppointment = appointmentRepository.save(appointment);
+        if (schedule.isEmpty()) {
+            throw new RuntimeException("Doctor does not work on " + dayOfWeek);
+        }
 
-        // Get doctor and patient details
-        User doctor = userRepository.findByUsername(slot.getDoctorId())
-                .orElseThrow(() -> new RuntimeException("Doctor not found"));
-        User patient = userRepository.findByUsername(patientId)
-                .orElseThrow(() -> new RuntimeException("Patient not found"));
+        // 2. Check if time is within office hours
+        java.time.LocalTime time = appointmentTime.toLocalTime();
+        boolean withinHours = schedule.stream()
+                .anyMatch(s -> !time.isBefore(s.getStartTime()) && !time.isAfter(s.getEndTime()));
 
-        // Build response
-        Map<String, Object> response = new HashMap<>();
+        if (!withinHours) {
+            throw new RuntimeException("Time is outside of doctor's office hours");
+        }
+
+        // 3. Check for double booking
+        List<Appointment> existing = appointmentRepository.findByDoctorId(doctorId);
+        boolean isDoubleBooked = existing.stream().anyMatch(a -> a.getAppointmentTime().equals(appointmentTime) &&
+                !"CANCELLED".equals(a.getStatus()));
+
+        if (isDoubleBooked) {
+            throw new RuntimeException("Doctor is already booked at this time");
+        }
+
+        // Create Appointment
+        Appointment appointment = new Appointment(
+                doctorId,
+                patientId,
+                appointmentTime,
+                "General Checkup",
+                "CONFIRMED");
+        appointment = appointmentRepository.save(appointment);
+
+        Map<String, Object> response = new java.util.HashMap<>();
         response.put("message", "Appointment booked successfully");
+        response.put("appointmentId", appointment.getId());
 
-        Map<String, Object> appointmentDetails = new HashMap<>();
-        appointmentDetails.put("appointmentId", savedAppointment.getId());
-        appointmentDetails.put("doctorName", doctor.getUsername());
-        appointmentDetails.put("doctorDepartment", doctor.getDepartment());
-        appointmentDetails.put("patientName", patient.getUsername());
-        appointmentDetails.put("fromTime", slot.getFromTime());
-        appointmentDetails.put("toTime", slot.getToTime());
-        appointmentDetails.put("status", savedAppointment.getStatus());
-
-        response.put("appointment", appointmentDetails);
+        logService.log(patientIdStr, "BOOK_APPOINTMENT",
+                "Booked appointment with Doctor " + doctorId + " for " + appointmentTime, "SUCCESS");
 
         return response;
     }
 
-    public List<Appointment> getPatientAppointments(String patientId) {
-        return appointmentRepository.findByPatientId(patientId);
-    }
-
-    public List<Appointment> getDoctorAppointments(String doctorId) {
-        return appointmentRepository.findByDoctorId(doctorId);
-    }
-
-    @Transactional
-    public Appointment cancelAppointment(Long appointmentId, String userId) {
-        Appointment appointment = appointmentRepository.findById(appointmentId)
-                .orElseThrow(() -> new RuntimeException("Appointment not found"));
-
-        // Verify the user is either the patient or doctor
-        if (!appointment.getPatientId().equals(userId) && !appointment.getDoctorId().equals(userId)) {
-            throw new RuntimeException("Unauthorized to cancel this appointment");
-        }
-
-        appointment.setStatus("CANCELLED");
-
-        // Free up the slot
-        availabilityService.cancelSlot(appointment.getSlotId());
-
+    // For legacy/simple controller support
+    public Appointment bookAppointment(Long doctorId,
+            Long patientId, java.time.LocalDateTime time, String reason) {
+        Appointment appointment = new Appointment(doctorId, patientId, time, reason, "PENDING");
         return appointmentRepository.save(appointment);
     }
 
-    @Transactional
-    public Appointment completeAppointment(Long appointmentId, String doctorId) {
-        Appointment appointment = appointmentRepository.findById(appointmentId)
+    public List<Appointment> getDoctorAppointments(String doctorIdStr) {
+        Long doctorId = Long.parseLong(doctorIdStr);
+        return appointmentRepository.findByDoctorId(doctorId);
+    }
+
+    // Legacy support
+    public List<Appointment> getAppointmentsForDoctor(Long doctorId) {
+        return appointmentRepository.findByDoctorId(doctorId);
+    }
+
+    public List<Appointment> getPatientAppointments(String patientIdStr) {
+        Long patientId = Long.parseLong(patientIdStr);
+        return appointmentRepository.findByPatientId(patientId);
+    }
+
+    // Legacy support
+    public List<Appointment> getAppointmentsForPatient(Long patientId) {
+        return appointmentRepository.findByPatientId(patientId);
+    }
+
+    public Appointment completeAppointment(Long appointmentId, String doctorIdStr) {
+        if (appointmentId == null)
+            throw new IllegalArgumentException("Appointment ID cannot be null");
+        Appointment appt = appointmentRepository.findById(appointmentId)
                 .orElseThrow(() -> new RuntimeException("Appointment not found"));
 
-        if (!appointment.getDoctorId().equals(doctorId)) {
-            throw new RuntimeException("Unauthorized to complete this appointment");
+        // Verify doctor owns this appointment
+        if (!appt.getDoctorId().toString().equals(doctorIdStr)) {
+            throw new RuntimeException("Unauthorized: This appointment does not belong to you.");
         }
 
-        appointment.setStatus("COMPLETED");
+        appt.setStatus("COMPLETED");
+        Appointment savedAppt = appointmentRepository.save(appt);
+        logService.log(doctorIdStr, "COMPLETE_APPOINTMENT",
+                "Completed appointment #" + appointmentId + " for patient " + appt.getPatientId(), "SUCCESS");
+        return savedAppt;
+    }
+
+    @Transactional
+    public Appointment cancelAppointment(Long appointmentId, String patientIdStr) {
+        if (appointmentId == null)
+            throw new IllegalArgumentException("Appointment ID cannot be null");
+        Appointment appt = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new RuntimeException("Appointment not found"));
+
+        // Verify patient owns this appointment
+        if (!appt.getPatientId().toString().equals(patientIdStr)) {
+            throw new RuntimeException("Unauthorized: This appointment does not belong to you.");
+        }
+
+        appt.setStatus("CANCELLED");
+
+        // Free up the slot?
+        // Logic would be complex to find the exact slot again unless we link them.
+        // For now, simpler to just mark appointment cancelled.
+
+        Appointment savedAppt = appointmentRepository.save(appt);
+        logService.log(patientIdStr, "CANCEL_APPOINTMENT",
+                "Cancelled appointment #" + appointmentId + " with Doctor " + appt.getDoctorId(), "SUCCESS");
+        return savedAppt;
+    }
+
+    public Appointment updateStatus(Long appointmentId, String status) {
+        if (appointmentId == null)
+            throw new IllegalArgumentException("Appointment ID cannot be null");
+        Appointment appointment = appointmentRepository.findById(appointmentId).orElseThrow();
+        appointment.setStatus(status);
         return appointmentRepository.save(appointment);
     }
 }

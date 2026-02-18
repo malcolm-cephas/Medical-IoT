@@ -12,36 +12,26 @@ public class Appointment {
     private Long id;
 
     @Column(nullable = false)
-    private String doctorId;
+    private Long doctorId; // User.role = DOCTOR
 
     @Column(nullable = false)
-    private String patientId;
+    private Long patientId; // User.role = PATIENT
 
     @Column(nullable = false)
-    private Long slotId; // References DoctorAvailability
-
-    @Column(nullable = false)
-    private String status; // SCHEDULED, COMPLETED, CANCELLED
-
-    private String notes;
-
     private LocalDateTime appointmentTime;
 
-    private LocalDateTime createdAt;
+    private String reason;
+    private String status; // PENDING, CONFIRMED, COMPLETED, CANCELLED
 
     public Appointment() {
     }
 
-    public Appointment(String doctorId, String patientId, Long slotId, String status) {
+    public Appointment(Long doctorId, Long patientId, LocalDateTime appointmentTime, String reason, String status) {
         this.doctorId = doctorId;
         this.patientId = patientId;
-        this.slotId = slotId;
+        this.appointmentTime = appointmentTime;
+        this.reason = reason;
         this.status = status;
-    }
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
     }
 
     // Getters and Setters
@@ -53,44 +43,20 @@ public class Appointment {
         this.id = id;
     }
 
-    public String getDoctorId() {
+    public Long getDoctorId() {
         return doctorId;
     }
 
-    public void setDoctorId(String doctorId) {
+    public void setDoctorId(Long doctorId) {
         this.doctorId = doctorId;
     }
 
-    public String getPatientId() {
+    public Long getPatientId() {
         return patientId;
     }
 
-    public void setPatientId(String patientId) {
+    public void setPatientId(Long patientId) {
         this.patientId = patientId;
-    }
-
-    public Long getSlotId() {
-        return slotId;
-    }
-
-    public void setSlotId(Long slotId) {
-        this.slotId = slotId;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public String getNotes() {
-        return notes;
-    }
-
-    public void setNotes(String notes) {
-        this.notes = notes;
     }
 
     public LocalDateTime getAppointmentTime() {
@@ -101,11 +67,19 @@ public class Appointment {
         this.appointmentTime = appointmentTime;
     }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
+    public String getReason() {
+        return reason;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
+    public void setReason(String reason) {
+        this.reason = reason;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 }

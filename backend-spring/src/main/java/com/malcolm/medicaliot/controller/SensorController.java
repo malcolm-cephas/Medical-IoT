@@ -15,6 +15,8 @@ import com.malcolm.medicaliot.model.SensorData;
 import com.malcolm.medicaliot.repository.SensorDataRepository;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
+import org.springframework.security.access.prepost.PreAuthorize;
+
 @RestController
 @RequestMapping("/api/sensor")
 public class SensorController {
@@ -133,6 +135,7 @@ public class SensorController {
     }
 
     @GetMapping("/history/{patientId}")
+    @PreAuthorize("@policyEngineService.evaluateAccess(authentication.name, #patientId, 'READ')")
     public ResponseEntity<?> getHistory(@PathVariable String patientId) {
         // Filter history by patientId from database
         List<SensorData> patientHistory = sensorDataRepository.findByPatientIdOrderByTimestampAsc(patientId);

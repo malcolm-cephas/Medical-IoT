@@ -10,6 +10,9 @@ import socket
 # Initialize colorama
 init()
 
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
 # Configuration
 # Custom hostname for local network access
 # Change to your PC's IP or "localhost" if needed
@@ -54,7 +57,8 @@ def generate_vitals(patient_id):
 def send_data(data):
     try:
         # Using Basic Auth (admin/password) to correspond with backend security
-        response = requests.post(API_URL, json=data, timeout=2, auth=('admin', 'password'))
+        # verify=False needed for self-signed certs
+        response = requests.post(API_URL, json=data, timeout=2, auth=('admin', 'password'), verify=False)
         if response.status_code == 200:
             status_color = Fore.GREEN
             status_msg = "SUCCESS"
