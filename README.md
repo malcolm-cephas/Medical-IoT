@@ -248,11 +248,7 @@ graph TB
     end
 
     subgraph "Database Tables"
-<<<<<<< HEAD
         USERS["users<br/>(id, username, password, role<br/>fullName, age, gender, dept)"]
-=======
-        USERS[users]
->>>>>>> b7d33cb8061d4da93f5f5c2b945c813c6f219934
         SENSORS[sensor_data]
         CONSENTS[consent_records]
         SECURITY[security_events]
@@ -354,11 +350,7 @@ graph TB
 - **Analytics (Python)**: ABE encryption and image processing
 - **Database (MySQL)**: Persistent storage for all entities
 - **IPFS**: Decentralized storage for encrypted records
-<<<<<<< HEAD
 - **Blockchain**: Immutable audit trail for compliance
-=======
-- **Blockchain**: Added Security Immutable audit trail for compliance
->>>>>>> b7d33cb8061d4da93f5f5c2b945c813c6f219934
 
 
 
@@ -490,9 +482,14 @@ This project is for educational purposes only.
 
 ## 👨‍💻 Authors (Project Team)
 
-- **Team Member 1**
-- **Team Member 2**
-- **Team Member 3** 
+*Malcolm Cephas*
+- GitHub: [@malcolm-cephas](https://github.com/malcolm-cephas)
+  
+*Shalini Sinha*
+- GitHub: [@Shalini-git-hub](https://github.com/Shalini-git-hub)
+  
+*A B Vishvajeeth*
+- GitHub: [@ABVishvajeeth](https://github.com/ABVishvajeeth) 
 
 ## 🙏 Acknowledgments
 
@@ -511,9 +508,4 @@ This project is for educational purposes only.
 
 ---
 
-<<<<<<< HEAD
 **⚠️ Note**: This is a prototype system. For production use, additional security hardening, compliance certifications (HIPAA, GDPR), and professional security audits are required.
-=======
-**⚠️ Note**: This is a prototype system. For production use, additional security hardening, compliance certifications (HIPAA, GDPR), and professional security audits are required.
-**⚠️ Note**: This is a prototype system. For production use, additional security hardening, compliance certifications (HIPAA, GDPR), and professional security audits are required.
->>>>>>> b7d33cb8061d4da93f5f5c2b945c813c6f219934
