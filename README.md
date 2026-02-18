@@ -486,7 +486,7 @@ This project is for educational purposes only.
 - GitHub: [@malcolm-cephas](https://github.com/malcolm-cephas)
   
 *Shalini Sinha*
-- GitHub: [@Shalini-git-hub](https://github.com/Shalini-git-hub)
+- GitHub: [@Shalini-sinha-codes](https://github.com/shalini-sinha-codes)
   
 *A B Vishvajeeth*
 - GitHub: [@ABVishvajeeth](https://github.com/ABVishvajeeth) 
