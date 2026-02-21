@@ -476,10 +476,6 @@ python mock_data_generator.py
 
 This is an academic project for demonstration purposes. Feel free to fork and extend!
 
-## 📄 License
-
-This project is for educational purposes only.
-
 ## 👨‍💻 Authors (Project Team)
 
 *Malcolm Cephas*
