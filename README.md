@@ -478,7 +478,7 @@ python mock_data_generator.py
 
 ## 🤝 Contributing
 
-This is an academic project for demonstration purposes. Feel free to fork and extend!
+This is an academic project for demonstration purposes. All rights reserved. See the [LICENSE](./LICENSE) file for more information.
 
 ## 👨‍💻 Authors (Project Team)
 
@@ -505,6 +505,14 @@ This is an academic project for demonstration purposes. Feel free to fork and ex
 - **[DATABASE_SETUP.md](./DATABASE_SETUP.md)** - Database configuration and setup instructions
 - **[MULTI_DEVICE_ACCESS.md](./MULTI_DEVICE_ACCESS.md)** - Guide for accessing the system from multiple devices
 - **[Doctor-Patient-API](https://github.com/MarcusFranklin-GIT/doctor-patient-api)** - Original NestJS repository (adapted for this project)
+
+---
+
+## 📄 License
+
+Copyright (c) 2026 Malcolm Cephas, Shalini Sinha, A B Vishvajeeth. All Rights Reserved.
+
+This project is proprietary and for academic review only. Unauthorized use or distribution is prohibited.
 
 ---
 
