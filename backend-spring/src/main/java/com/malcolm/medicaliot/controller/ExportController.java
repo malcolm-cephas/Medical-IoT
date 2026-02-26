@@ -12,6 +12,11 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+/**
+ * Controller for Data Export.
+ * Allows administrators to export security logs and other sensitive data
+ * for external auditing or compliance reporting.
+ */
 @RestController
 @RequestMapping("/api/export")
 public class ExportController {
@@ -19,6 +24,12 @@ public class ExportController {
     @Autowired
     private SecurityRepository securityRepository;
 
+    /**
+     * Exports all security logs as a CSV file.
+     * Useful for integration with SIEM tools or manual review.
+     * 
+     * @return A CSV-formatted string as a file download attachment.
+     */
     @GetMapping("/logs/csv")
     public ResponseEntity<String> exportLogs() {
         List<SecurityEvent> events = securityRepository.findAll();

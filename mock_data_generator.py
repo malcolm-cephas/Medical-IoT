@@ -78,9 +78,9 @@ def send_data(data):
           f"{status_color}{status_msg}{Style.RESET_ALL}")
 
 def main():
-    print(f"{Fore.YELLOW}=== Medical IoT Mock Data Generator ==={Style.RESET_ALL}")
-    print(f"Simulating devices for {len(PATIENTS)} patients...")
-    print(f"Target: {API_URL}")
+    print(f"{Fore.YELLOW}=== Medical IoT Hardware Abstraction Layer (HAL) Simulator ==={Style.RESET_ALL}")
+    print(f"Simulating {len(PATIENTS)} Arduino Uno R4 WiFi sensor nodes (Digital Twins)...")
+    print(f"Target Gateway: {API_URL}")
     print("Press Ctrl+C to stop.\n")
     
     try:

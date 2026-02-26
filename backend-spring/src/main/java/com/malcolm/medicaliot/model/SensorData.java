@@ -3,28 +3,53 @@ package com.malcolm.medicaliot.model;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
+/**
+ * Entity representing a single data point of patient vitals collected from IoT
+ * sensors.
+ * Stores physiological metrics like Heart Rate, SpO2, and Environmental data.
+ */
 @Entity
 @Table(name = "sensor_data")
 public class SensorData {
+
+    /**
+     * Unique ID for the sensor reading record.
+     */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /**
+     * The ID of the patient to whom this data belongs.
+     * Cannot be null.
+     */
     @Column(nullable = false)
     private String patientId;
 
-    private int heartRate;
-    private int spo2;
-    private float temperature;
-    private int systolicBP;
-    private int diastolicBP;
-    private float humidity;
+    // --- Vital Signs ---
 
+    private int heartRate; // Beats Per Minute (BPM)
+    private int spo2; // Oxygen Saturation (%)
+    private float temperature; // Body Temperature (Celsius)
+    private int systolicBP; // Systolic Blood Pressure (mmHg)
+    private int diastolicBP; // Diastolic Blood Pressure (mmHg)
+
+    // --- Environmental Context ---
+
+    private float humidity; // Room Humidity (%) - useful for respiratory context
+
+    /**
+     * Timestamp when the data was received/recorded.
+     */
     private LocalDateTime timestamp;
 
+    // Default constructor for JPA
     public SensorData() {
     }
 
+    /**
+     * Parameterized constructor for creating new sensor data instances.
+     */
     public SensorData(Long id, String patientId, int heartRate, int spo2, float temperature, int systolicBP,
             int diastolicBP, float humidity, LocalDateTime timestamp) {
         this.id = id;
@@ -38,10 +63,16 @@ public class SensorData {
         this.timestamp = timestamp;
     }
 
+    /**
+     * Lifecycle callback to set the timestamp automatically before persisting to
+     * the database.
+     */
     @PrePersist
     protected void onCreate() {
         timestamp = LocalDateTime.now();
     }
+
+    // --- Getters and Setters ---
 
     public Long getId() {
         return id;

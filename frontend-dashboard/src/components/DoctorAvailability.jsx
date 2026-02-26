@@ -2,13 +2,28 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { getBackendUrl } from '../config';
 
+/**
+ * DoctorAvailability Component
+ * 
+ * Allows doctors to manage their working hours (availability slots) and view/manage appointments.
+ * Doctors can:
+ * - Set recurring weekly availability (e.g., Every Monday 9-5).
+ * - View their current "Office Hours" slots.
+ * - Remove specific availability slots.
+ * - View upcoming appointments booked by patients.
+ * - Mark appointments as completed.
+ * 
+ * @param {Object} user - The currently logged-in doctor.
+ */
 const DoctorAvailability = ({ user }) => {
     const [appointments, setAppointments] = useState([]);
     const [slots, setSlots] = useState([]);
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState({ text: '', type: '' });
+
+    // State for new availability creation form
     const [newSlot, setNewSlot] = useState({
-        daysOfWeek: [], // Changed from dayOfWeek to daysOfWeek array
+        daysOfWeek: [], // Array of selected days (e.g., ['MONDAY', 'WEDNESDAY'])
         startTime: '09:00',
         endTime: '17:00'
     });
@@ -21,6 +36,9 @@ const DoctorAvailability = ({ user }) => {
         fetchMySlots();
     }, []);
 
+    /**
+     * Toggles a day in the multi-select dropdown.
+     */
     const toggleDay = (day) => {
         const currentDays = [...newSlot.daysOfWeek];
         if (currentDays.includes(day)) {
@@ -30,6 +48,9 @@ const DoctorAvailability = ({ user }) => {
         }
     };
 
+    /**
+     * Fetches appointments assigned to this doctor.
+     */
     const fetchMyAppointments = async () => {
         try {
             const response = await axios.get(`${getBackendUrl()}/api/doctor/appointments`, {
@@ -41,6 +62,9 @@ const DoctorAvailability = ({ user }) => {
         }
     };
 
+    /**
+     * Fetches current availability configuration.
+     */
     const fetchMySlots = async () => {
         try {
             const response = await axios.get(
@@ -52,6 +76,10 @@ const DoctorAvailability = ({ user }) => {
         }
     };
 
+    /**
+     * Submits the new availability schedule to the backend.
+     * Creates slots for all selected days.
+     */
     const setAvailability = async (e) => {
         e.preventDefault();
         if (newSlot.daysOfWeek.length === 0) {
@@ -68,8 +96,8 @@ const DoctorAvailability = ({ user }) => {
             );
             setMessage({ text: response.data.message, type: 'success' });
             alert(response.data.message); // Clear confirmation for user
-            setNewSlot({ ...newSlot, daysOfWeek: [] }); // Reset days after success
-            fetchMySlots();
+            setNewSlot({ ...newSlot, daysOfWeek: [] }); // Reset days selection
+            fetchMySlots(); // Refresh list
         } catch (error) {
             console.error('Error setting availability:', error);
             setMessage({
@@ -81,8 +109,10 @@ const DoctorAvailability = ({ user }) => {
         }
     };
 
-    // ... completeAppointment and cancelSlot functions remain unchanged ...
-
+    /**
+     * Marks an appointment as completed.
+     * This might trigger post-visit workflows in a real system (billing, prescriptions).
+     */
     const completeAppointment = async (appointmentId) => {
         setLoading(true);
         try {
@@ -101,6 +131,10 @@ const DoctorAvailability = ({ user }) => {
         }
     };
 
+    /**
+     * Removes an availability slot.
+     * Prevents future bookings for that time slot.
+     */
     const cancelSlot = async (slotId) => {
         if (!window.confirm('Are you sure you want to remove these office hours?')) return;
 
@@ -149,7 +183,7 @@ const DoctorAvailability = ({ user }) => {
                 </div>
             )}
 
-            {/* Set Availability Form */}
+            {/* Section: Set Recurring Schedule */}
             <div className="section">
                 <h3>Set Recurring Weekly Schedule</h3>
                 <form onSubmit={setAvailability} className="availability-form">
@@ -245,7 +279,7 @@ const DoctorAvailability = ({ user }) => {
                 </form>
             </div>
 
-            {/* My Slots (Office Hours) */}
+            {/* Section: List of Existing Slots */}
             <div className="section">
                 <h3>Current Office Hours</h3>
                 {slots.length === 0 ? (
@@ -274,7 +308,7 @@ const DoctorAvailability = ({ user }) => {
                 )}
             </div>
 
-            {/* My Appointments */}
+            {/* Section: Upcoming Appointments */}
             <div className="section">
                 <h3>My Appointments</h3>
                 {appointments.length === 0 ? (

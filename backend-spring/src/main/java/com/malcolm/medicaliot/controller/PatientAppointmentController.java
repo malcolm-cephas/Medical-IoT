@@ -15,6 +15,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Controller for Patient appointment operations.
+ * Allows patients to view doctors, check availability, book, and manage
+ * appointments.
+ */
 @RestController
 @RequestMapping("/api/patient")
 public class PatientAppointmentController {
@@ -29,8 +34,10 @@ public class PatientAppointmentController {
     private UserRepository userRepository;
 
     /**
-     * Get all doctors
-     * Adapted from the NestJS repository's all-doctors endpoint
+     * Retrieves a list of all registered doctors.
+     * Used to populate the doctor selection UI.
+     * 
+     * @return List of doctor summaries (id, username, department).
      */
     @GetMapping("/all-doctors")
     public ResponseEntity<?> getAllDoctors() {
@@ -55,8 +62,10 @@ public class PatientAppointmentController {
     }
 
     /**
-     * Get available slots for a specific doctor
-     * Adapted from the NestJS repository's all-doctors/:doctorId/slots endpoint
+     * Retrieves available time slots for a specific doctor.
+     * 
+     * @param doctorId The ID of the doctor.
+     * @return List of available slots.
      */
     @GetMapping("/all-doctors/{doctorId}/slots")
     public ResponseEntity<?> getDoctorSlots(@PathVariable String doctorId) {
@@ -69,7 +78,11 @@ public class PatientAppointmentController {
     }
 
     /**
-     * Book an appointment
+     * Books a new appointment with a doctor.
+     * 
+     * @param request   JSON object containing 'doctorId' and 'appointmentTime'.
+     * @param patientId The ID of the patient booking the appointment (from header).
+     * @return The created appointment details.
      */
     @PostMapping("/book-appointment")
     public ResponseEntity<?> bookAppointment(
@@ -89,7 +102,10 @@ public class PatientAppointmentController {
     }
 
     /**
-     * Get all appointments for a patient
+     * Retrieves all appointments booked by the requesting patient.
+     * 
+     * @param patientId The ID of the patient (from header).
+     * @return List of appointments.
      */
     @GetMapping("/appointments")
     public ResponseEntity<?> getPatientAppointments(@RequestHeader("X-User-Id") String patientId) {
@@ -102,7 +118,11 @@ public class PatientAppointmentController {
     }
 
     /**
-     * Cancel an appointment
+     * Cancels an existing appointment.
+     * 
+     * @param appointmentId The ID of the appointment to cancel.
+     * @param patientId     The ID of the patient requesting cancellation.
+     * @return The updated appointment object.
      */
     @PostMapping("/appointments/{appointmentId}/cancel")
     public ResponseEntity<?> cancelAppointment(

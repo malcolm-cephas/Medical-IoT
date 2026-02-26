@@ -8,10 +8,23 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Controller for System Performance Metrics.
+ * Exposes internal metrics about encryption speeds, throughput, and system
+ * health.
+ * Used by the Performance Dashboard.
+ */
 @RestController
 @RequestMapping("/api/performance")
 public class PerformanceController {
 
+    /**
+     * Retrieves key system performance metrics.
+     * Currently returns simulated data based on system benchmarks.
+     * In a production environment, this would hook into Micrometer/Actuator.
+     * 
+     * @return Map of metric names to values.
+     */
     @GetMapping("/metrics")
     public ResponseEntity<?> getMetrics() {
         // In a real system, these would be tracked via Micrometer/AspectJ

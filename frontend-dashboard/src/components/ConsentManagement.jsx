@@ -2,16 +2,33 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { getBackendUrl } from '../config';
 
+/**
+ * ConsentManagement Component
+ * 
+ * Manages the dynamic access control policies for patient data.
+ * Allows patients to approve/reject doctor access requests.
+ * Allows doctors to see the status of their requests.
+ * 
+ * This component interacts with the backend's policy engine (ABAC/RBAC hybrid).
+ * 
+ * @param {string} patientId - The ID of the patient whose consents are being managed.
+ * @param {Object} currentUser - The currently logged-in user (can be patient or doctor).
+ * @param {string} theme - 'light' or 'dark' mode.
+ */
 const ConsentManagement = ({ patientId, currentUser, theme }) => {
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(false);
 
+    // Fetch requests whenever the patient context changes
     useEffect(() => {
         if (patientId) {
             fetchConsentRequests();
         }
     }, [patientId]);
 
+    /**
+     * Retrieves the list of consent requests for the current patient.
+     */
     const fetchConsentRequests = async () => {
         setLoading(true);
         try {
@@ -24,6 +41,12 @@ const ConsentManagement = ({ patientId, currentUser, theme }) => {
         }
     };
 
+    /**
+     * Handles the user's decision (Approve/Reject) on a consent request.
+     * 
+     * @param {string} consentId - ID of the consent record.
+     * @param {string} status - New status ('APPROVED' or 'REJECTED').
+     */
     const respondToRequest = async (consentId, status) => {
         try {
             await axios.post(`${getBackendUrl()}/api/consent/respond`, {
@@ -31,17 +54,19 @@ const ConsentManagement = ({ patientId, currentUser, theme }) => {
                 status: status
             });
             alert(`Request ${status.toLowerCase()}`);
-            fetchConsentRequests(); // Refresh list
+            fetchConsentRequests(); // Refresh list to reflect changes
         } catch (error) {
             console.error("Error responding to request", error);
             alert("Failed to respond to request");
         }
     };
 
+    // Filter requests by status for grouped display
     const pendingRequests = requests.filter(r => r.status === 'PENDING');
     const approvedRequests = requests.filter(r => r.status === 'APPROVED');
     const rejectedRequests = requests.filter(r => r.status === 'REJECTED');
 
+    // Helper flags to determine UI actions
     const isPatient = currentUser && currentUser.role === 'patient';
     const isOwner = currentUser && (currentUser.username === patientId || currentUser.id === patientId);
 
@@ -58,7 +83,7 @@ const ConsentManagement = ({ patientId, currentUser, theme }) => {
                 <p style={{ padding: '2rem', textAlign: 'center' }}>Loading requests...</p>
             ) : (
                 <>
-                    {/* Pending Requests */}
+                    {/* Pending Requests Section */}
                     {pendingRequests.length > 0 && (
                         <div style={{ marginBottom: '2rem' }}>
                             <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: 'orange' }}>
@@ -84,6 +109,7 @@ const ConsentManagement = ({ patientId, currentUser, theme }) => {
                                                 Requested: {new Date(request.requestedAt).toLocaleString()}
                                             </p>
                                         </div>
+                                        {/* Actions available only to the patient/owner */}
                                         {isPatient && isOwner && (
                                             <div style={{ display: 'flex', gap: '0.5rem' }}>
                                                 <button
@@ -125,7 +151,7 @@ const ConsentManagement = ({ patientId, currentUser, theme }) => {
                         </div>
                     )}
 
-                    {/* Approved Requests */}
+                    {/* Approved Requests Section */}
                     {approvedRequests.length > 0 && (
                         <div style={{ marginBottom: '2rem' }}>
                             <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: 'var(--success-color)' }}>
@@ -151,6 +177,7 @@ const ConsentManagement = ({ patientId, currentUser, theme }) => {
                                                 Approved: {new Date(request.approvedAt).toLocaleString()}
                                             </span>
                                         </div>
+                                        {/* Revoke Option */}
                                         {isPatient && isOwner && (
                                             <button
                                                 onClick={() => respondToRequest(request.id, 'REJECTED')}
@@ -173,7 +200,7 @@ const ConsentManagement = ({ patientId, currentUser, theme }) => {
                         </div>
                     )}
 
-                    {/* Rejected Requests */}
+                    {/* Rejected Requests Section */}
                     {rejectedRequests.length > 0 && (
                         <div>
                             <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: 'var(--text-secondary)' }}>

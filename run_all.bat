@@ -11,7 +11,7 @@ type nul > Logs\analytics.log
 
 :: Start Applications
 echo ===========================================
-echo Starting Medical IoT System v2.0
+echo Starting Medical IoT System v2.0 (IoT Engineering Edition)
 echo ===========================================
 
 echo [1/3] Starting Analytics Service (Port 4242)...

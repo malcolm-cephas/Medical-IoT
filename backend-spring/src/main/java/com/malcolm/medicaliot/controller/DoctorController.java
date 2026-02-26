@@ -12,6 +12,10 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Controller for Doctor-specific operations.
+ * Handles setting availability slots and managing assigned appointments.
+ */
 @RestController
 @RequestMapping("/api/doctor")
 public class DoctorController {
@@ -23,8 +27,13 @@ public class DoctorController {
     private AppointmentService appointmentService;
 
     /**
-     * Doctor sets their availability
-     * Adapted from the NestJS repository's set-availability endpoint
+     * Endpoint for a doctor to set their availability for specific days.
+     * This defines the "Office Hours" slots that patients can book.
+     * 
+     * @param doctorId The ID of the doctor (from header).
+     * @param dto      Data Transfer Object containing day of week, start time, and
+     *                 end time.
+     * @return A list of created availability slots or an error message.
      */
     @PostMapping("/set-availability")
     public ResponseEntity<?> setAvailability(
@@ -48,7 +57,10 @@ public class DoctorController {
     }
 
     /**
-     * Get all available slots for a specific doctor
+     * Retrieves all availability slots configured for a specific doctor.
+     * 
+     * @param doctorId The ID of the doctor.
+     * @return List of availability objects.
      */
     @GetMapping("/{doctorId}/slots")
     public ResponseEntity<?> getDoctorSlots(@PathVariable String doctorId) {
@@ -61,7 +73,10 @@ public class DoctorController {
     }
 
     /**
-     * Get all appointments for a doctor
+     * Retrieves all appointments assigned to the requesting doctor.
+     * 
+     * @param doctorId The ID of the doctor (from header).
+     * @return List of appointments.
      */
     @GetMapping("/appointments")
     public ResponseEntity<?> getDoctorAppointments(@RequestHeader("X-User-Id") String doctorId) {
@@ -74,7 +89,11 @@ public class DoctorController {
     }
 
     /**
-     * Complete an appointment
+     * Marks a specific appointment as completed.
+     * 
+     * @param appointmentId The ID of the appointment to complete.
+     * @param doctorId      The ID of the doctor performing the action.
+     * @return The updated appointment object.
      */
     @PostMapping("/appointments/{appointmentId}/complete")
     public ResponseEntity<?> completeAppointment(
@@ -91,7 +110,11 @@ public class DoctorController {
     }
 
     /**
-     * Cancel a slot
+     * Cancels a specific availability slot.
+     * This effectively removes it from the list of bookable times.
+     * 
+     * @param slotId The ID of the slot to cancel.
+     * @return The cancelled slot object.
      */
     @PostMapping("/slots/{slotId}/cancel")
     public ResponseEntity<?> cancelSlot(@PathVariable Long slotId) {

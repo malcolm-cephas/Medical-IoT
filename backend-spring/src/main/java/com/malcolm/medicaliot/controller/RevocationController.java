@@ -8,6 +8,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
+/**
+ * Controller for Access Revocation.
+ * Handles the removal of specific attributes or permissions from users.
+ * Key part of the dynamic access control system.
+ */
 @RestController
 @RequestMapping("/api/access")
 public class RevocationController {
@@ -18,6 +23,14 @@ public class RevocationController {
     @Autowired
     private LockdownService lockdownService;
 
+    /**
+     * Revokes a specific attribute from a user.
+     * This immediately affects their ability to decrypt CP-ABE data requiring that
+     * attribute.
+     * 
+     * @param body Map containing 'username', 'attribute', and 'adminId'.
+     * @return Success message or error if user/attribute not found.
+     */
     @PostMapping("/revoke")
     public ResponseEntity<?> revokeAccess(@RequestBody Map<String, String> body) {
         String username = body.get("username");

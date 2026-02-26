@@ -16,6 +16,7 @@ import {
 import { Line } from 'react-chartjs-2';
 import PatientVitalList from './PatientVitalList';
 import PatientStatistics from './PatientStatistics';
+import PrescriptionPad from './PrescriptionPad';
 
 ChartJS.register(
     CategoryScale,
@@ -35,6 +36,7 @@ const MobileDashboard = ({ user, theme, toggleTheme }) => {
     const [activeTab, setActiveTab] = useState(user.role === 'patient' ? 'vitals' : 'ward');
     const [viewMode, setViewMode] = useState(user.role === 'patient' ? 'detail' : 'list');
     const [lockdown, setLockdown] = useState({ active: false, reason: '' });
+    const [showPrescriptionPad, setShowPrescriptionPad] = useState(false);
 
     // WebSocket and polling logic (kept identical to PC for reliability)
     useEffect(() => {
@@ -159,6 +161,10 @@ const MobileDashboard = ({ user, theme, toggleTheme }) => {
                                 <h3>Monitoring: {patientId}</h3>
                                 {(user.role === 'doctor' || user.role === 'nurse') && (
                                     <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                        <button onClick={() => setShowPrescriptionPad(true)}
+                                            style={{ background: '#ec4899', border: 'none', color: 'white', borderRadius: '4px', padding: '0.2rem 0.5rem', fontSize: '0.7rem' }}>
+                                            💊
+                                        </button>
                                         <button onClick={() => {
                                             const id = prompt('Enter Patient ID to monitor:');
                                             if (id) setPatientId(id);
@@ -255,6 +261,28 @@ const MobileDashboard = ({ user, theme, toggleTheme }) => {
                             <button onClick={() => window.location.href = '/'} className="m-logout-btn">
                                 Log Out System
                             </button>
+                        </div>
+                    </div>
+                )}
+                {showPrescriptionPad && (
+                    <div style={{
+                        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                        background: 'rgba(0,0,0,0.8)', zIndex: 2000,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                    }}>
+                        <div style={{ width: '95%', maxHeight: '90%', overflowY: 'auto', background: 'var(--card-bg)', borderRadius: '12px', padding: '1rem', position: 'relative' }}>
+                            <button
+                                onClick={() => setShowPrescriptionPad(false)}
+                                style={{
+                                    position: 'absolute', top: '10px', right: '10px',
+                                    background: 'none', border: 'none', fontSize: '1.5rem', color: 'var(--text-primary)'
+                                }}
+                            >✕</button>
+                            <PrescriptionPad
+                                doctorId={user.username === 'doctor_micheal' ? 1 : 2} // Temp mapping
+                                selectedPatientId={patientId}
+                                onClose={() => setShowPrescriptionPad(false)}
+                            />
                         </div>
                     </div>
                 )}

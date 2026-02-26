@@ -23,7 +23,10 @@ import AppointmentBooking from './AppointmentBooking';
 import DoctorAvailability from './DoctorAvailability';
 import SecurityAudit from './SecurityAudit';
 import SystemActivities from './SystemActivities';
+import PrescriptionPad from './PrescriptionPad';
+import PatientSidebar from './PatientSidebar';
 
+// Register Chart.js components globally
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -34,19 +37,53 @@ ChartJS.register(
   Legend
 );
 
+/**
+ * Dashboard Component
+ * 
+ * The central hub of the application. It adapts its layout and functionality based on the user's role
+ * (Doctor, Patient, Nurse, Admin).
+ * 
+ * Key Features:
+ * - Real-time Vitals Monitoring (WebSockets).
+ * - Role-based View Modes (Detail vs List).
+ * - Tabbed Navigation for sub-features (Consent, Images, Appointments).
+ * - Emergency "Break-Glass" Access.
+ * - System Lockdown Handling.
+ * 
+ * @param {Object} props
+ * @param {Object} props.user - The authenticated user object.
+ * @param {string} props.theme - Current theme ('light' or 'dark').
+ * @param {Function} props.toggleTheme - Function to toggle application theme.
+ * @param {boolean} [props.forceDetail] - Force the dashboard into detail view (e.g., for mobile).
+ */
 const Dashboard = ({ user, theme, toggleTheme, forceDetail }) => {
-  const { patientId: urlPatientId } = useParams();
+  const { patientId: urlPatientId } = useParams(); // Get patient ID from URL if present
   const navigate = useNavigate();
 
-  const [patientId, setPatientId] = useState(urlPatientId || (user.role === 'patient' ? user.username : 'patient_001'));
-  const [viewMode, setViewMode] = useState(forceDetail || urlPatientId || user.role === 'patient' ? 'detail' : 'list');
-  const [activeTab, setActiveTab] = useState('vitals'); // vitals, consent, images, appointments
-  const [history, setHistory] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [isConnected, setIsConnected] = useState(false);
-  const [notificationsEnabled, setNotificationsEnabled] = useState(window.Notification ? window.Notification.permission === 'granted' : false);
-  const [lastCriticalId, setLastCriticalId] = useState(null);
+  // --- State Management ---
 
+  // Current patient being viewed. Defaults to URL param, or user's own ID if patient, or demo ID.
+  const [patientId, setPatientId] = useState(urlPatientId || (user.role === 'patient' ? user.username : 'patient_001'));
+
+  // View mode: 'list' for ward overview, 'detail' for single patient monitoring.
+  const [viewMode, setViewMode] = useState(forceDetail || urlPatientId || user.role === 'patient' ? 'detail' : 'list');
+
+  const [activeTab, setActiveTab] = useState('vitals'); // Current active tab: vitals, consent, images, appointments
+  const [history, setHistory] = useState([]); // Historical vital signs data
+  const [loading, setLoading] = useState(true);
+  const [isConnected, setIsConnected] = useState(false); // WebSocket connection status
+
+  // Notification permissions and state
+  const [notificationsEnabled, setNotificationsEnabled] = useState(window.Notification ? window.Notification.permission === 'granted' : false);
+  const [lastCriticalId, setLastCriticalId] = useState(null); // Track last alerted record to prevent duplicate alerts
+
+  // UI Toggles
+  const [showPrescriptionPad, setShowPrescriptionPad] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(false);
+
+  /**
+   * Requests browser permission for push notifications using the Notification API.
+   */
   const requestNotificationPermission = () => {
     if (!window.Notification) return;
     window.Notification.requestPermission().then(permission => {
@@ -54,6 +91,10 @@ const Dashboard = ({ user, theme, toggleTheme, forceDetail }) => {
     });
   };
 
+  /**
+   * Effect: Monitor vitals for critical thresholds and trigger browser notifications.
+   * Runs whenever history updates.
+   */
   useEffect(() => {
     if (history.length > 0 && notificationsEnabled && viewMode === 'detail') {
       const latest = history[history.length - 1];
@@ -71,31 +112,36 @@ const Dashboard = ({ user, theme, toggleTheme, forceDetail }) => {
     }
   }, [history, notificationsEnabled, patientId, viewMode]);
 
-  // Synchronize state with URL changes
+  // Synchronize state with URL changes (e.g. browser back button)
   useEffect(() => {
     if (urlPatientId) {
       setPatientId(urlPatientId);
       setViewMode('detail');
     } else if (user.role !== 'patient' && !forceDetail) {
+      // Return to list view if no ID in URL and user is staff
       setViewMode('list');
     }
   }, [urlPatientId, user.role, forceDetail]);
 
-  // If role is patient, they can only see themselves
+  // Enforce: Patients can only see themselves
   useEffect(() => {
     if (user && user.role === 'patient') {
       setPatientId(user.username);
     }
   }, [user]);
 
-  // Initial fetch and WebSocket connection
+  // --- Data Fetching and WebSockets ---
+
   useEffect(() => {
+    /**
+     * Fetches initial historical data for the selected patient via REST API.
+     */
     const fetchData = async () => {
       try {
         const response = await axios.get(`${getBackendUrl()}/api/sensor/history/${patientId}`);
         setHistory(response.data);
         setLoading(false);
-        setIsConnected(true);
+        setIsConnected(true); // Assume connected if REST works, WS will confirm next
       } catch (error) {
         console.error("Error fetching data", error);
         setIsConnected(false);
@@ -104,23 +150,24 @@ const Dashboard = ({ user, theme, toggleTheme, forceDetail }) => {
 
     fetchData();
 
-    // WebSocket Setup
+    // WebSocket Setup using SockJS and Stomp
     const socket = new SockJS(`${getBackendUrl()}/ws-vitals`);
     const stompClient = Stomp.over(socket);
-    stompClient.debug = null;
+    stompClient.debug = null; // Quiet mode
 
     stompClient.connect({}, (frame) => {
       setIsConnected(true);
 
-      // Subscribe to this patient's vitals
+      // Subscribe to this patient's specific vitals channel
       stompClient.subscribe(`/topic/vitals/${patientId}`, (message) => {
         const newData = JSON.parse(message.body);
-        setHistory(prev => [...prev, newData].slice(-50)); // Keep last 50 for trends
+        setHistory(prev => [...prev, newData].slice(-50)); // Append new data, keep last 50 for memory efficiency
       });
 
-      // Subscribe to security alerts/lockdown
+      // Subscribe to system-wide security alerts/lockdown
       stompClient.subscribe('/topic/alerts', (message) => {
         const alert = JSON.parse(message.body);
+        // Notify if relevant to this patient or if user is staff
         if (alert.patientId === patientId || user.role !== 'patient') {
           if (notificationsEnabled) {
             new window.Notification("🚨 MEDICAL ALERT", {
@@ -134,6 +181,7 @@ const Dashboard = ({ user, theme, toggleTheme, forceDetail }) => {
       setIsConnected(false);
     });
 
+    // Cleanup on unmount or patient change
     return () => {
       if (stompClient && stompClient.connected) {
         stompClient.disconnect();
@@ -432,12 +480,29 @@ const Dashboard = ({ user, theme, toggleTheme, forceDetail }) => {
           </div>
           {(user.role === 'doctor' || user.role === 'nurse' || user.role === 'admin') && viewMode === 'detail' && (
             <div style={{ display: 'flex', gap: '0.5rem' }}>
+              {/* Prescription Button (Doctor Only) */}
+              {user.role === 'doctor' && (
+                <button
+                  onClick={() => setShowPrescriptionPad(true)}
+                  className="btn-secondary"
+                  style={{ padding: '0.5rem 1rem', background: '#ec4899', color: 'white' }}
+                >
+                  💊 Prescribe
+                </button>
+              )}
               <button
                 onClick={exportPatientData}
                 className="btn-secondary"
                 style={{ padding: '0.5rem 1rem', background: 'var(--success-color)', color: 'white' }}
               >
                 📥 Export CSV
+              </button>
+              <button
+                onClick={() => setShowSidebar(!showSidebar)}
+                className="btn-secondary"
+                style={{ padding: '0.5rem 1rem', background: '#6366f1', color: 'white' }}
+              >
+                ℹ️ Info
               </button>
               <button
                 onClick={() => navigate('/dashboard')}
@@ -449,6 +514,40 @@ const Dashboard = ({ user, theme, toggleTheme, forceDetail }) => {
             </div>
           )}
         </div>
+
+        {/* Prescription Modal */}
+        {showPrescriptionPad && (
+          <div style={{
+            position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+            backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 1000
+          }}>
+            <div style={{ position: 'relative', width: '500px', maxWidth: '90%' }}>
+              <button
+                onClick={() => setShowPrescriptionPad(false)}
+                style={{
+                  position: 'absolute', top: '-10px', right: '-10px',
+                  background: 'white', borderRadius: '50%', width: '30px', height: '30px',
+                  border: '1px solid #ccc', cursor: 'pointer', zIndex: 10
+                }}
+              >
+                ✕
+              </button>
+              <PrescriptionPad
+                doctorId={user.username === 'doctor_micheal' ? 1 : 2} // Temporary mapping, ideally get from user object
+                selectedPatientId={patientId}
+                onClose={() => setShowPrescriptionPad(false)}
+              />
+            </div>
+          </div>
+        )}
+
+        <PatientSidebar
+          patientId={patientId}
+          isOpen={showSidebar}
+          onClose={() => setShowSidebar(false)}
+          theme={theme}
+        />
 
         {/* Tab Navigation */}
         <div className="tab-navigation" style={{

@@ -15,6 +15,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Controller for managing Patient information.
+ * Provides endpoints for doctors/nurses to view patient lists and summaries.
+ */
 @RestController
 @RequestMapping("/api/patients")
 public class PatientController {
@@ -25,6 +29,15 @@ public class PatientController {
     @Autowired
     private SensorDataRepository sensorDataRepository;
 
+    /**
+     * Retrieves a paginated list of patients, optionally filtered by search term.
+     * Also enriches each patient record with their latest vital signs.
+     * 
+     * @param page   Page number (0-indexed).
+     * @param size   Number of items per page.
+     * @param search Optional search string for filtering by name or username.
+     * @return Paginated response containing patient summaries with latest vitals.
+     */
     @GetMapping
     public ResponseEntity<?> getPatients(
             @RequestParam(defaultValue = "0") int page,
@@ -32,6 +45,7 @@ public class PatientController {
             @RequestParam(defaultValue = "") String search) {
 
         Page<User> patientPage;
+        // Fetch patients from DB based on search criteria
         if (search.isEmpty()) {
             patientPage = userRepository.findByRole("PATIENT", PageRequest.of(page, size));
         } else {
@@ -40,6 +54,7 @@ public class PatientController {
                     PageRequest.of(page, size));
         }
 
+        // Process each patient to create a summary view
         List<Map<String, Object>> patientSummaries = patientPage.getContent().stream().map(user -> {
             Map<String, Object> summary = new HashMap<>();
             summary.put("id", user.getId());
@@ -49,7 +64,8 @@ public class PatientController {
             summary.put("age", user.getAge());
             summary.put("gender", user.getGender());
 
-            // Get latest vitals for summary directly from DB
+            // Get latest vitals for summary directly from DB to show real-time status in
+            // the list
             java.util.Optional<SensorData> latestOpt = sensorDataRepository
                     .findFirstByPatientIdOrderByTimestampDesc(user.getUsername());
 
@@ -60,6 +76,7 @@ public class PatientController {
                 summary.put("lastUpdate",
                         latest.getTimestamp() != null ? latest.getTimestamp().toString() : "Just now");
             } else {
+                // Default values if no sensor data exists
                 summary.put("latestHeartRate", "--");
                 summary.put("latestSpo2", "--");
                 summary.put("lastUpdate", "No data");
@@ -68,6 +85,7 @@ public class PatientController {
             return summary;
         }).collect(Collectors.toList());
 
+        // Construct the final paginated response
         Map<String, Object> response = new HashMap<>();
         response.put("patients", patientSummaries);
         response.put("currentPage", patientPage.getNumber());

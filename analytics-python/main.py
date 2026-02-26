@@ -35,8 +35,8 @@ class HealthData(BaseModel):
     min_spo2: Optional[int] = 95
 
 class EncryptRequest(BaseModel):
-    message: str
-    policy_attributes: List[str]
+    data: str
+    policy: str
 
 class EncryptImageRequest(BaseModel):
     image_base64: str
@@ -54,15 +54,15 @@ def read_root():
 def get_public_key():
     return {"public_key": abe.get_public_key()}
 
-@app.post("/encrypt")
-def encrypt_data(req: EncryptRequest):
+@app.post("/abe/encrypt")
+def encrypt_data_abe(req: EncryptRequest):
     try:
-        print(f"Encrypting data with policy: {req.policy_attributes}")
-        ciphertext = abe.encrypt(req.message, req.policy_attributes)
-        return ciphertext
+        # Calls the updated ABE engine which supports policy strings (e.g. "Doctor AND Cardiology")
+        ciphertext_package = abe.encrypt(req.data, req.policy)
+        return {"ciphertext": json.dumps(ciphertext_package), "status": "success"}
     except Exception as e:
-        print(f"Encryption Error: {e}")
-        return {"error": str(e)}
+        print(f"ABE Encryption Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/encrypt-image")
 def encrypt_image_endpoint(req: EncryptImageRequest):
@@ -86,7 +86,10 @@ def decrypt_image_endpoint(req: DecryptImageRequest):
 
 @app.post("/analyze")
 def analyze_health(data: HealthData):
-    # Dummy logic for risk calculation
+    analysis = check_vitals(data)
+    return analysis
+
+def check_vitals(data: HealthData):
     risk_score = 0
     anomalies = []
 
@@ -94,42 +97,45 @@ def analyze_health(data: HealthData):
     max_hr = data.max_heart_rate if data.max_heart_rate else 100
     min_spo2 = data.min_spo2 if data.min_spo2 else 95
 
-    if data.heartRate > max_hr or data.heartRate < 60:
+    # Critical Checks
+    if data.heartRate > max_hr or data.heartRate < 50:
         risk_score += 30
-        anomalies.append(f"Abnormal Heart Rate (>{max_hr} or <60)")
+        anomalies.append(f"Abnormal Heart Rate ({data.heartRate} bpm)")
     
     if data.spo2 < min_spo2:
         risk_score += 50
-        anomalies.append(f"Low Oxygen Saturation (<{min_spo2})")
+        anomalies.append(f"Critical SpO2 Level ({data.spo2}%)")
     
     if data.temperature > 37.5:
         risk_score += 20
-        anomalies.append("Fever")
-        
-    # --- Advanced Analytics ---
-    # 1. Fall Detection
+        anomalies.append(f"High Temperature ({data.temperature}°C)")
+
+    # Fall Detection
     if data.accelerometer_z < 0.5: # Freefall detected
         risk_score += 100
         anomalies.append("FALL DETECTED")
-    
-    # 2. ECG Arrhythmia Detection (Simplified)
+
+    # ECG Arrhythmia Detection
     if data.ecg_readings:
         variance = np.var(data.ecg_readings) if len(data.ecg_readings) > 0 else 0
-        if variance > 500: # Arbitrary threshold for "jumps"
+        if variance > 500:
             risk_score += 40
-            anomalies.append("Possible Arrhythmia (ECG Variance)")
+            anomalies.append("Irregular ECG Variance Detected")
 
     risk_level = "LOW"
-    if risk_score > 50:
+    if risk_score >= 80:
+        risk_level = "CRITICAL"
+    elif risk_score >= 50:
         risk_level = "HIGH"
-    elif risk_score > 20:
+    elif risk_score >= 20:
         risk_level = "MEDIUM"
 
     return {
         "patientId": data.patientId,
         "risk_score": risk_score,
         "risk_level": risk_level,
-        "anomalies": anomalies
+        "anomalies": anomalies,
+        "is_critical": risk_level == "CRITICAL" or risk_level == "HIGH"
     }
 
 if __name__ == "__main__":

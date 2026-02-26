@@ -2,14 +2,31 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { getAnalyticsUrl } from '../config';
 
+/**
+ * SecureImageTransfer Component
+ * 
+ * Demonstrates the secure transfer of medical images (e.g., X-rays, MRI).
+ * Uses a multi-stage process:
+ * 1. Upload: User selects an image.
+ * 2. Encrypt & Scramble: Front-end sends image to Analytics service which performs
+ *    chaos-map based scrambling and encryption.
+ * 3. Decrypt: Authorized user can request decryption to view the original image.
+ * 
+ * Displays cryptographic metrics (Entropy, NPCR, UACI) to validate security strength.
+ * 
+ * @param {string} theme - 'light' or 'dark' mode for UI styling.
+ */
 const SecureImageTransfer = ({ theme }) => {
     const [selectedImage, setSelectedImage] = useState(null);
     const [previewUrl, setPreviewUrl] = useState(null);
-    const [encryptedData, setEncryptedData] = useState(null);
-    const [decryptedImage, setDecryptedImage] = useState(null);
-    const [metrics, setMetrics] = useState(null);
+    const [encryptedData, setEncryptedData] = useState(null); // Encrypted string or base64 blob
+    const [decryptedImage, setDecryptedImage] = useState(null); // Resulting image after decryption
+    const [metrics, setMetrics] = useState(null); // Security metrics from backend
     const [loading, setLoading] = useState(false);
 
+    /**
+     * Handles file input change and sets up the preview.
+     */
     const handleImageChange = (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -21,6 +38,10 @@ const SecureImageTransfer = ({ theme }) => {
         }
     };
 
+    /**
+     * Sends the selected image to the Python Analytics service for encryption.
+     * The backend is expected to return the encrypted data blob and security metrics.
+     */
     const encryptImage = async () => {
         if (!selectedImage) return;
         setLoading(true);
@@ -43,6 +64,10 @@ const SecureImageTransfer = ({ theme }) => {
         }
     };
 
+    /**
+     * Requests the backend to decrypt the previously encrypted data.
+     * This simulates an authorized receiver accessing the medical image.
+     */
     const decryptImage = async () => {
         if (!encryptedData) return;
         setLoading(true);
@@ -67,7 +92,7 @@ const SecureImageTransfer = ({ theme }) => {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem', marginTop: '1.5rem' }}>
-                {/* Upload Section */}
+                {/* 1. Upload Section */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     <h3>1. Upload Source Image</h3>
                     <div className="form-group">
@@ -88,7 +113,7 @@ const SecureImageTransfer = ({ theme }) => {
                     </button>
                 </div>
 
-                {/* Encryption Results */}
+                {/* 2. Encryption Results & Metrics */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     <h3>2. Encryption Analysis</h3>
                     {metrics ? (
@@ -132,7 +157,7 @@ const SecureImageTransfer = ({ theme }) => {
                     )}
                 </div>
 
-                {/* Decryption Result */}
+                {/* 3. Decryption Result */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     <h3>3. Decrypted Outcome</h3>
                     {decryptedImage ? (

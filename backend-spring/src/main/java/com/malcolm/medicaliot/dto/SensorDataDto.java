@@ -1,12 +1,31 @@
 package com.malcolm.medicaliot.dto;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+
 public class SensorDataDto {
     private String patientId;
+
+    @Min(0)
+    @Max(300)
     private int heartRate;
+
+    @Min(0)
+    @Max(100)
     private int spo2;
+
+    @Min(0)
+    @Max(50)
     private float temperature;
+
+    @Min(0)
+    @Max(300)
     private int systolicBP;
+
+    @Min(0)
+    @Max(200)
     private int diastolicBP;
+
     private float humidity;
 
     public SensorDataDto() {

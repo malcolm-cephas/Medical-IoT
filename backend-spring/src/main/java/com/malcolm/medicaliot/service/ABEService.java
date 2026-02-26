@@ -24,60 +24,40 @@ public class ABEService {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    @org.springframework.beans.factory.annotation.Value("${analytics.url}")
+    private String analyticsBaseUrl; // e.g., http://localhost:4242/analyze
+
+    @Autowired
+    private org.springframework.web.client.RestTemplate restTemplate;
+
     public String encrypt(String data, String policy) {
         try {
-            // 1. Get Master Public Key from Key Authority (Python Engine)
-            String publicPem = keyAuthorityService.getPublicKey();
-            if (publicPem == null) {
-                return "MOCK_ENC[NO_KEY]:" + data;
+            // DELEGATION MODE: Send data + policy to Python CP-ABE Service
+            // This ensures mathematically correct CP-ABE (BN-254 curve) instead of local
+            // RSA simulation.
+
+            String baseUrl = analyticsBaseUrl.replace("/analyze", "");
+            String url = baseUrl + "/abe/encrypt";
+
+            Map<String, String> request = new HashMap<>();
+            request.put("data", data);
+            request.put("policy", policy);
+
+            // Expecting JSON response: { "ciphertext": "...", "status": "success" }
+            @SuppressWarnings("unchecked")
+            Map<String, Object> response = restTemplate.postForObject(url, request, Map.class);
+
+            if (response != null && response.containsKey("ciphertext")) {
+                // Return the ABE package string directly from the authority
+                return (String) response.get("ciphertext");
+            } else {
+                throw new RuntimeException("Empty response from ABE Authority");
             }
 
-            // 2. Generate Local AES Key (128-bit)
-            KeyGenerator keyGen = KeyGenerator.getInstance("AES");
-            keyGen.init(128);
-            SecretKey aesKey = keyGen.generateKey();
-
-            // 3. Encrypt Data locally with AES-GCM
-            // Generate IV
-            byte[] iv = new byte[12];
-            new SecureRandom().nextBytes(iv);
-
-            Cipher aesCipher = Cipher.getInstance("AES/GCM/NoPadding");
-            GCMParameterSpec spec = new GCMParameterSpec(128, iv);
-            aesCipher.init(Cipher.ENCRYPT_MODE, aesKey, spec);
-
-            byte[] cipherTextBytes = aesCipher.doFinal(data.getBytes(StandardCharsets.UTF_8));
-
-            // 4. Encrypt AES Key with RSA Public Key (Hybrid Encapsulation)
-            // Parse PEM to PublicKey
-            String pemClean = publicPem
-                    .replace("-----BEGIN PUBLIC KEY-----", "")
-                    .replace("-----END PUBLIC KEY-----", "")
-                    .replaceAll("\\s", "");
-            byte[] encodedKey = Base64.getDecoder().decode(pemClean);
-            X509EncodedKeySpec keySpec = new X509EncodedKeySpec(encodedKey);
-            KeyFactory kf = KeyFactory.getInstance("RSA");
-            PublicKey rsaPublicKey = kf.generatePublic(keySpec);
-
-            // Encrypt AES Key
-            Cipher rsaCipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-1AndMGF1Padding");
-            rsaCipher.init(Cipher.ENCRYPT_MODE, rsaPublicKey);
-            byte[] encryptedKeyBytes = rsaCipher.doFinal(aesKey.getEncoded());
-
-            // 5. Construct JSON Payload (Matching Python format for compatibility)
-            Map<String, Object> packageMap = new HashMap<>();
-            packageMap.put("policy", parsePolicy(policy));
-            packageMap.put("ciphertext", Base64.getEncoder().encodeToString(cipherTextBytes));
-            packageMap.put("nonce", Base64.getEncoder().encodeToString(iv));
-            packageMap.put("encrypted_key", Base64.getEncoder().encodeToString(encryptedKeyBytes));
-            packageMap.put("status", "HYBRID_ENCRYPTION_JAVA_LOCAL");
-
-            return "ABE:" + objectMapper.writeValueAsString(packageMap);
-
         } catch (Exception e) {
-            System.err.println("Hybrid Encryption Failed: " + e.getMessage());
-            e.printStackTrace();
-            return "MOCK_ENC[ERROR]:" + data;
+            System.err.println("CP-ABE Delegation Failed: " + e.getMessage());
+            // FAIL-CLOSED: Do not allow unencrypted or mock data in production flow.
+            throw new RuntimeException("CRITICAL: ABE Encryption Service Unavailable. Upload Aborted for Security.");
         }
     }
 

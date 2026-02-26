@@ -7,6 +7,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
+/**
+ * Controller for handling "Break-Glass" Emergency Access.
+ * Allows doctors to bypass normal consent restrictions in critical situations.
+ * All such actions are strictly logged to the immutable audit trail.
+ */
 @RestController
 @RequestMapping("/api/emergency")
 public class EmergencyOverrideController {
@@ -14,6 +19,13 @@ public class EmergencyOverrideController {
     @Autowired
     private LockdownService lockdownService;
 
+    /**
+     * Grants temporary emergency access to a patient's data.
+     * Validates that a reason is provided and logs the event securely.
+     * 
+     * @param body Map containing 'doctorId', 'patientId', and 'reason'.
+     * @return A temporary access token or grant confirmation.
+     */
     @PostMapping("/override")
     public ResponseEntity<?> emergencyOverride(@RequestBody Map<String, String> body) {
         String doctorId = body.get("doctorId");

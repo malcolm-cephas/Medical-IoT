@@ -2,18 +2,35 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { getBackendUrl } from '../config';
 
+/**
+ * SecurityAudit Component
+ * 
+ * Provides a real-time visualization of the system's security state.
+ * 
+ * Key Features:
+ * - Blockchain Audit Trail: Visualise immutable data transactions as linked blocks.
+ * - System Lockdown: Emergency control to disable sensitive operations.
+ * - Security Events: Real-time feed of alerts (intrusion attempts, anomalies).
+ * - Component Status: Health check of security subsystems (ABE, ECDH).
+ * 
+ * @param {string} theme - 'light' or 'dark' mode.
+ */
 const SecurityAudit = ({ theme }) => {
     const [chain, setChain] = useState([]);
     const [lockdownStatus, setLockdownStatus] = useState({ isLockdown: false, reason: '' });
     const [loading, setLoading] = useState(true);
     const [events, setEvents] = useState([]);
 
+    // Poll for security updates every 5 seconds
     useEffect(() => {
         fetchData();
         const interval = setInterval(fetchData, 5000);
         return () => clearInterval(interval);
     }, []);
 
+    /**
+     * Fetches current blockchain state, lockdown status, and recent events.
+     */
     const fetchData = async () => {
         try {
             const [chainRes, statusRes, eventsRes] = await Promise.all([
@@ -31,11 +48,15 @@ const SecurityAudit = ({ theme }) => {
         }
     };
 
+    /**
+     * Toggles the system-wide lockdown mode.
+     * When locked, sensitive data upload/download is restricted.
+     */
     const toggleLockdown = async () => {
-        const url = lockdownStatus.isLockdown 
-            ? `${getBackendUrl()}/api/security/unlock` 
+        const url = lockdownStatus.isLockdown
+            ? `${getBackendUrl()}/api/security/unlock`
             : `${getBackendUrl()}/api/security/lockdown`;
-            
+
         try {
             await axios.post(url, { reason: "Manual Administrator Action" });
             fetchData();
@@ -47,22 +68,22 @@ const SecurityAudit = ({ theme }) => {
     return (
         <div style={{ padding: '1rem' }}>
             {/* Header with Lockdown Control */}
-            <div className="card" style={{ 
-                marginBottom: '2rem', 
+            <div className="card" style={{
+                marginBottom: '2rem',
                 border: lockdownStatus.isLockdown ? '2px solid #ff4444' : '1px solid var(--card-border)',
                 background: lockdownStatus.isLockdown ? 'rgba(255, 68, 68, 0.1)' : 'var(--card-bg)'
             }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
                         <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            🛡️ Security Overview 
+                            🛡️ Security Overview
                             {lockdownStatus.isLockdown && <span className="badge badge-critical">SYSTEM LOCKDOWN ACTIVE</span>}
                         </h2>
                         <p style={{ color: 'var(--text-secondary)' }}>
                             Immutable audit trail and real-time threat monitoring.
                         </p>
                     </div>
-                    <button 
+                    <button
                         onClick={toggleLockdown}
                         className={lockdownStatus.isLockdown ? "btn-primary" : "btn-warning"}
                         style={{ background: lockdownStatus.isLockdown ? '#4CAF50' : '#ff4444', borderColor: 'transparent' }}
@@ -73,14 +94,14 @@ const SecurityAudit = ({ theme }) => {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '2rem' }}>
-                
-                {/* Blockchain Visualizer */}
+
+                {/* Blockchain Visualizer Section */}
                 <div className="card">
                     <h3>🔗 Blockchain Audit Trail (Immutable Ledger)</h3>
-                    <div style={{ 
-                        marginTop: '1rem', 
-                        maxHeight: '600px', 
-                        overflowY: 'auto', 
+                    <div style={{
+                        marginTop: '1rem',
+                        maxHeight: '600px',
+                        overflowY: 'auto',
                         padding: '1rem',
                         background: theme === 'dark' ? '#1a1a1a' : '#f5f5f5',
                         borderRadius: '8px'
@@ -88,23 +109,24 @@ const SecurityAudit = ({ theme }) => {
                         {chain.length === 0 ? (
                             <p>No transactions recorded yet.</p>
                         ) : (
+                            // Display blocks in reverse chronological order
                             chain.slice(0).reverse().map((block, index) => (
                                 <div key={block.hash} style={{ position: 'relative', marginBottom: '2rem' }}>
-                                    {/* Link Line */}
+                                    {/* Connection Line to previous block */}
                                     {index < chain.length - 1 && (
-                                        <div style={{ 
-                                            position: 'absolute', 
-                                            left: '20px', 
-                                            bottom: '-35px', 
-                                            width: '2px', 
-                                            height: '35px', 
-                                            background: '#666' 
+                                        <div style={{
+                                            position: 'absolute',
+                                            left: '20px',
+                                            bottom: '-35px',
+                                            width: '2px',
+                                            height: '35px',
+                                            background: '#666'
                                         }}></div>
                                     )}
-                                    
-                                    <div style={{ 
-                                        padding: '1rem', 
-                                        background: 'var(--card-bg)', 
+
+                                    <div style={{
+                                        padding: '1rem',
+                                        background: 'var(--card-bg)',
                                         border: '1px solid var(--card-border)',
                                         borderRadius: '8px',
                                         boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
@@ -117,7 +139,7 @@ const SecurityAudit = ({ theme }) => {
                                                 {new Date(block.timestamp).toLocaleString()}
                                             </span>
                                         </div>
-                                        
+
                                         <div style={{ fontFamily: 'monospace', fontSize: '0.85rem', wordBreak: 'break-all' }}>
                                             <div style={{ marginBottom: '0.25rem' }}>
                                                 <span style={{ color: '#888' }}>HASH:</span> {block.hash}
@@ -125,10 +147,10 @@ const SecurityAudit = ({ theme }) => {
                                             <div style={{ marginBottom: '0.25rem' }}>
                                                 <span style={{ color: '#888' }}>PREV:</span> {block.prevHash}
                                             </div>
-                                            <div style={{ 
-                                                marginTop: '0.5rem', 
-                                                padding: '0.5rem', 
-                                                background: theme === 'dark' ? '#333' : '#eee', 
+                                            <div style={{
+                                                marginTop: '0.5rem',
+                                                padding: '0.5rem',
+                                                background: theme === 'dark' ? '#333' : '#eee',
                                                 borderRadius: '4px',
                                                 borderLeft: '3px solid #00bcd4'
                                             }}>
@@ -142,8 +164,10 @@ const SecurityAudit = ({ theme }) => {
                     </div>
                 </div>
 
-                {/* Security Events & Stats */}
+                {/* Security Events & Stats Column */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+
+                    {/* Recent Events Feed */}
                     <div className="card">
                         <h3>🚨 Recent Security Events</h3>
                         <div style={{ marginTop: '1rem' }}>
@@ -151,8 +175,8 @@ const SecurityAudit = ({ theme }) => {
                                 <p style={{ color: 'var(--text-secondary)' }}>No recent security alerts.</p>
                             ) : (
                                 events.map(event => (
-                                    <div key={event.id} style={{ 
-                                        padding: '0.75rem', 
+                                    <div key={event.id} style={{
+                                        padding: '0.75rem',
                                         marginBottom: '0.5rem',
                                         borderLeft: `4px solid ${event.severity === 'CRITICAL' ? '#ff4444' : event.severity === 'WARN' ? '#ffbb33' : '#00C851'}`,
                                         background: theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)'
@@ -168,6 +192,7 @@ const SecurityAudit = ({ theme }) => {
                         </div>
                     </div>
 
+                    {/* Status Indicators */}
                     <div className="card">
                         <h3>🔑 Access Control Status</h3>
                         <ul style={{ listStyle: 'none', padding: 0, marginTop: '1rem' }}>
