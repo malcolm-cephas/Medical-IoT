@@ -480,17 +480,13 @@ python mock_data_generator.py
 
 This is an academic project for demonstration purposes. Feel free to fork and extend!
 
-## 📄 License
-
-This project is for educational purposes only.
-
 ## 👨‍💻 Authors (Project Team)
 
 *Malcolm Cephas*
 - GitHub: [@malcolm-cephas](https://github.com/malcolm-cephas)
   
 *Shalini Sinha*
-- GitHub: [@Shalini-git-hub](https://github.com/Shalini-git-hub)
+- GitHub: [@Shalini-sinha-codes](https://github.com/shalini-sinha-codes)
   
 *A B Vishvajeeth*
 - GitHub: [@ABVishvajeeth](https://github.com/ABVishvajeeth) 
