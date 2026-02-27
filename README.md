@@ -40,9 +40,9 @@ The system uses a central `.env` file in the root directory to store sensitive i
 
 | Variable | Description | Default |
 | :--- | :--- | :--- |
-| `DB_PASSWORD` | MySQL Root Password | `malcolm` |
-| `ADMIN_PASSWORD` | System Admin Password | `password` |
-| `SSL_KEYSTORE_PASSWORD` | SSL Certificate Password | `password` |
+| `DB_PASSWORD` | MySQL Root Password | `<your_password>` |
+| `ADMIN_PASSWORD` | System Admin Password | `<your_password>` |
+| `SSL_KEYSTORE_PASSWORD` | SSL Certificate Password | `<your_password>` |
 | `ANALYTICS_URL` | Analytical Service Endpoint | `http://localhost:4242/analyze` |
 
 ## 🛠️ Technology Stack
