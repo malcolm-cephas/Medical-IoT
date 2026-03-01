@@ -1,28 +1,12 @@
 package com.malcolm.medicaliot.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.malcolm.medicaliot.security.KeyAuthorityService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.crypto.Cipher;
-import javax.crypto.KeyGenerator;
-import javax.crypto.SecretKey;
-import javax.crypto.spec.GCMParameterSpec;
-import java.nio.charset.StandardCharsets;
-import java.security.KeyFactory;
-import java.security.PublicKey;
-import java.security.SecureRandom;
-import java.security.spec.X509EncodedKeySpec;
 import java.util.*;
 
 @Service
 public class ABEService {
-
-    @Autowired
-    private KeyAuthorityService keyAuthorityService;
-
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @org.springframework.beans.factory.annotation.Value("${analytics.url}")
     private String analyticsBaseUrl; // e.g., http://localhost:4242/analyze
@@ -65,14 +49,5 @@ public class ABEService {
         // Decryption requires User Secret Keys (USK) and Python Engine logic.
         // In this architecture, this happens on the client side or specialized service.
         return "Decryption requires Local Python Engine or Client-Side Tool";
-    }
-
-    private List<String> parsePolicy(String policy) {
-        // Mock policy parsing to match existing logic
-        if (policy.contains("Doctor"))
-            return Arrays.asList("doctor", "cardiology");
-        if (policy.contains("Nurse"))
-            return Arrays.asList("nurse");
-        return Arrays.asList("public");
     }
 }

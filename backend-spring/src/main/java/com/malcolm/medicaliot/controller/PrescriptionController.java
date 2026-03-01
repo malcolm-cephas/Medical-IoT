@@ -34,7 +34,8 @@ public class PrescriptionController {
     public ResponseEntity<Prescription> addPrescription(@RequestBody Prescription prescription) {
         // Saves the prescription to the database using the repository.
         // The ID will be automatically generated.
-        return ResponseEntity.ok(prescriptionRepository.save(prescription));
+        @org.springframework.lang.NonNull Prescription saved = prescriptionRepository.save(prescription);
+        return ResponseEntity.ok(saved);
     }
 
     /**

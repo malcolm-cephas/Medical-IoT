@@ -54,9 +54,13 @@ public class DoctorAvailabilityService {
     public DoctorAvailability cancelSlot(Long slotId) {
         if (slotId == null)
             throw new IllegalArgumentException("Slot ID cannot be null");
-        DoctorAvailability slot = repository.findById(slotId)
-                .orElseThrow(() -> new RuntimeException("Schedule/Slot not found"));
 
+        Optional<DoctorAvailability> optionalSlot = repository.findById(slotId);
+        if (optionalSlot.isEmpty()) {
+            throw new RuntimeException("Schedule/Slot not found");
+        }
+
+        DoctorAvailability slot = optionalSlot.get();
         repository.delete(slot);
         return slot;
     }
