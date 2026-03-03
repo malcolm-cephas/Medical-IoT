@@ -76,6 +76,16 @@ The system uses a central `.env` file in the root directory to store sensitive i
 
 ## 🚀 Quick Start
 
+### ⚡ Automated Setup (Recommended for Windows)
+To automatically install all dependencies and build the project, run the provided PowerShell script as an **Administrator**:
+
+```powershell
+.\setup_environment.ps1
+```
+*This will detect/install Java, Node, Python, Maven, and MySQL, then build all projects.*
+
+### 🛠️ Manual Setup
+
 ### 1. Database Setup
 
 Create the MySQL database:

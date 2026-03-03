@@ -1,7 +1,11 @@
 # Logs
 *.log
 logs/
+Logs/
 *.log.*
+build_errors.txt
+run_output.log
+start_log.txt
 
 # Python
 __pycache__/
