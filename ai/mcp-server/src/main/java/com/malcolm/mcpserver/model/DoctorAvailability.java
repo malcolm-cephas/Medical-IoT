@@ -1,0 +1,68 @@
+package com.malcolm.mcpserver.model;
+
+import jakarta.persistence.*;
+import java.time.LocalTime;
+
+@Entity
+@Table(name = "doctor_availability")
+public class DoctorAvailability {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private Long doctorId;
+
+    @Column(nullable = false)
+    private String dayOfWeek;
+
+    @Column(name = "from_time", nullable = false)
+    private LocalTime startTime;
+
+    @Column(name = "to_time", nullable = false)
+    private LocalTime endTime;
+
+    public DoctorAvailability() {
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getDoctorId() {
+        return doctorId;
+    }
+
+    public void setDoctorId(Long doctorId) {
+        this.doctorId = doctorId;
+    }
+
+    public String getDayOfWeek() {
+        return dayOfWeek;
+    }
+
+    public void setDayOfWeek(String dayOfWeek) {
+        this.dayOfWeek = dayOfWeek;
+    }
+
+    public LocalTime getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(LocalTime startTime) {
+        this.startTime = startTime;
+    }
+
+    public LocalTime getEndTime() {
+        return endTime;
+    }
+
+    public void setEndTime(LocalTime endTime) {
+        this.endTime = endTime;
+    }
+}

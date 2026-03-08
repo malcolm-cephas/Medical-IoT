@@ -19,6 +19,6 @@ export const getAnalyticsUrl = () => {
 export const getAiUrl = () => {
     const hostname = window.location.hostname;
     const port = import.meta.env.VITE_AI_PORT || '8083';
-    return 'http://:/api/chat';
+    return `http://${hostname}:${port}/api/chat`;
 };
 

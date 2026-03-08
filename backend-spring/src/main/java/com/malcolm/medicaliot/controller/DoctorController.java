@@ -21,10 +21,13 @@ import java.util.Map;
 public class DoctorController {
 
     @Autowired
+    private AppointmentService appointmentService;
+
+    @Autowired
     private DoctorAvailabilityService availabilityService;
 
     @Autowired
-    private AppointmentService appointmentService;
+    private com.malcolm.medicaliot.service.TwoFactorService twoFactorService;
 
     /**
      * Endpoint for a doctor to set their availability for specific days.
@@ -38,8 +41,13 @@ public class DoctorController {
     @PostMapping("/set-availability")
     public ResponseEntity<?> setAvailability(
             @RequestHeader("X-User-Id") String doctorId,
+            @RequestHeader(value = "X-2FA-Code", required = false) String tfaCode,
             @RequestBody AvailabilityDto dto) {
         try {
+            if (tfaCode == null || !twoFactorService.verifyCode(doctorId, tfaCode)) {
+                return ResponseEntity.status(403)
+                        .body(Map.of("error", "2FA Verification Required", "2fa_required", true));
+            }
             List<DoctorAvailability> availabilities = availabilityService.setAvailability(doctorId, dto);
             return ResponseEntity.ok(Map.of(
                     "message", "Availability set successfully for " + availabilities.size() + " days",
@@ -98,8 +106,13 @@ public class DoctorController {
     @PostMapping("/appointments/{appointmentId}/complete")
     public ResponseEntity<?> completeAppointment(
             @PathVariable Long appointmentId,
-            @RequestHeader("X-User-Id") String doctorId) {
+            @RequestHeader("X-User-Id") String doctorId,
+            @RequestHeader(value = "X-2FA-Code", required = false) String tfaCode) {
         try {
+            if (tfaCode == null || !twoFactorService.verifyCode(doctorId, tfaCode)) {
+                return ResponseEntity.status(403)
+                        .body(Map.of("error", "2FA Verification Required", "2fa_required", true));
+            }
             Appointment appointment = appointmentService.completeAppointment(appointmentId, doctorId);
             return ResponseEntity.ok(Map.of(
                     "message", "Appointment marked as completed",

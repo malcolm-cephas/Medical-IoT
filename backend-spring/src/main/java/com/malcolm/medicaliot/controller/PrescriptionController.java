@@ -22,6 +22,9 @@ public class PrescriptionController {
 
     private final PrescriptionRepository prescriptionRepository;
 
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.malcolm.medicaliot.service.TwoFactorService twoFactorService;
+
     /**
      * Endpoint to add a new prescription.
      * 
@@ -31,11 +34,20 @@ public class PrescriptionController {
      *         200 OK.
      */
     @PostMapping("/add")
-    public ResponseEntity<Prescription> addPrescription(@RequestBody Prescription prescription) {
+    public ResponseEntity<?> addPrescription(
+            @RequestHeader(value = "X-User-Id", required = false) String doctorId,
+            @RequestHeader(value = "X-2FA-Code", required = false) String tfaCode,
+            @RequestBody Prescription prescription) {
         // Saves the prescription to the database using the repository.
-        // The ID will be automatically generated.
         if (prescription == null) {
             return ResponseEntity.badRequest().build();
+        }
+
+        if (doctorId != null) {
+            if (tfaCode == null || !twoFactorService.verifyCode(doctorId, tfaCode)) {
+                return ResponseEntity.status(403)
+                        .body(java.util.Map.of("error", "2FA Verification Required", "2fa_required", true));
+            }
         }
         return ResponseEntity.ok(prescriptionRepository.save(prescription));
     }

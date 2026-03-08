@@ -1,5 +1,7 @@
 package com.malcolm.medicaliot;
 
+import com.malcolm.medicaliot.model.DoctorAvailability;
+import com.malcolm.medicaliot.repository.DoctorAvailabilityRepository;
 import com.malcolm.medicaliot.model.User;
 import com.malcolm.medicaliot.model.SensorData;
 import com.malcolm.medicaliot.repository.UserRepository;
@@ -10,13 +12,16 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Random;
+import java.util.List;
 
 @Component
 public class DataInitializer {
 
     @Bean
-    public CommandLineRunner initData(UserRepository userRepository, SensorDataRepository sensorDataRepository) {
+    public CommandLineRunner initData(UserRepository userRepository, SensorDataRepository sensorDataRepository,
+            DoctorAvailabilityRepository availabilityRepository) {
         return args -> {
             BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
             Random random = new Random();
@@ -113,7 +118,50 @@ public class DataInitializer {
                 }
             }
 
-            System.out.println("--- SYSTEM INITIALIZED: 40+ PATIENTS, 1 DOCTOR, 1 NURSE, 1 ADMIN ---");
+            // 6. Create Requested Doctors
+            createDoctor(userRepository, availabilityRepository, encoder,
+                    "dr_smith", "Dr. Smith", "CARDIOLOGY",
+                    List.of("MONDAY", "WEDNESDAY", "FRIDAY"), "09:00:00", "17:00:00");
+
+            createDoctor(userRepository, availabilityRepository, encoder,
+                    "dr_johnson", "Dr. Johnson", "DERMATOLOGY",
+                    List.of("TUESDAY", "THURSDAY"), "10:00:00", "18:00:00");
+
+            createDoctor(userRepository, availabilityRepository, encoder,
+                    "dr_lee", "Dr. Lee", "PEDIATRICS",
+                    List.of("MONDAY", "WEDNESDAY", "FRIDAY"), "08:00:00", "16:00:00");
+
+            createDoctor(userRepository, availabilityRepository, encoder,
+                    "dr_davis", "Dr. Davis", "ORTHOPEDICS",
+                    List.of("TUESDAY", "THURSDAY"), "09:00:00", "17:00:00");
+
+            createDoctor(userRepository, availabilityRepository, encoder,
+                    "dr_patel", "Dr. Patel", "GENERAL_PRACTITIONER",
+                    List.of("MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"), "08:00:00", "18:00:00");
+
+            System.out.println("--- SYSTEM INITIALIZED: 40+ PATIENTS, 6 DOCTORS, 1 NURSE, 1 ADMIN ---");
         };
+    }
+
+    private void createDoctor(UserRepository userRepository,
+            DoctorAvailabilityRepository availabilityRepository,
+            BCryptPasswordEncoder encoder,
+            String username, String fullName, String specialty,
+            List<String> days, String start, String end) {
+        if (userRepository.findByUsername(username).isEmpty()) {
+            User u = new User(null, username, encoder.encode("password"), "DOCTOR", specialty,
+                    "doctor," + specialty.toLowerCase());
+            u.setFullName(fullName);
+            u.setAge(35 + new Random().nextInt(20));
+            u.setGender(new Random().nextBoolean() ? "M" : "F");
+            User saved = userRepository.save(u);
+
+            LocalTime startTime = LocalTime.parse(start);
+            LocalTime endTime = LocalTime.parse(end);
+
+            for (String day : days) {
+                availabilityRepository.save(new DoctorAvailability(saved.getId(), day, startTime, endTime));
+            }
+        }
     }
 }
