@@ -97,16 +97,39 @@ GRANT ALL PRIVILEGES ON medical_iot_db.* TO 'root'@'localhost';
 FLUSH PRIVILEGES;
 ```
 
-### 2. Backend Setup
+### 2. Microservices Setup
 
+**Terminal 1: Auth Server**
+```bash
+cd auth-server
+mvn clean install
+mvn spring-boot:run
+```
+*(Runs on http://localhost:8081)*
+
+**Terminal 2: Core Backend**
 ```bash
 cd backend-spring
 mvn clean install
 mvn spring-boot:run
 ```
+*(Runs on http://localhost:8080)*
 
-The backend will start on `http://localhost:8080`.
-> **Note:** SSL is disabled by default for local development to avoid self-signed certificate issues. To enable production-grade security, update `application.properties`.
+**Terminal 3: AI MCP Server**
+```bash
+cd ai/mcp-server
+mvn clean install
+mvn spring-boot:run
+```
+*(Runs on http://localhost:8082)*
+
+**Terminal 4: AI MCP Client**
+```bash
+cd ai/mcp-client
+mvn clean install
+mvn spring-boot:run
+```
+*(Runs on http://localhost:8083)*
 
 ### 3. Analytics Service Setup
 
@@ -138,7 +161,7 @@ python mock_data_generator.py
 
 ## 🎯 One-Click Startup
 
-Use the provided batch script to start all services:
+Use the provided batch script to start all 6 services simultaneously:
 
 ```bash
 run_all.bat
@@ -160,9 +183,12 @@ docker-compose up --build
 
 This will automatically start:
 - **MySQL Database**: Port 3306
-- **Backend API**: Port 8080
-- **Frontend Dashboard**: Port 5173
+- **Core Backend**: Port 8080
+- **Auth Server**: Port 8081
+- **AI MCP Server**: Port 8082
+- **AI MCP Client**: Port 8083
 - **Analytics Service**: Port 4242
+- **Frontend Dashboard**: Port 5173
 
 ## 📱 Mobile App (APK) Generation
 
@@ -224,7 +250,6 @@ graph TB
         API[Spring Boot REST API]
         
         subgraph "Controllers"
-            AUTH[Auth Controller]
             SENSOR[Sensor Controller]
             CONS[Consent Controller]
             DOC[Doctor Controller]
@@ -232,7 +257,6 @@ graph TB
         end
         
         subgraph "Services"
-            USERSVC[User Service]
             SENSVC[Sensor Service]
             CONSVC[Consent Service]
             DOCAVSVC[Availability Service]
@@ -247,6 +271,16 @@ graph TB
             ABE[ABE Encryption]
             ECDH[ECDH Encryption]
         end
+    end
+    
+    subgraph "Auth Server - Port 8081"
+        AUTH[Auth Controller]
+        USERSVC[User Service]
+    end
+    
+    subgraph "AI System"
+        MCPCLIENT[MCP Client - Port 8083<br/>LLM Router]
+        MCPSERVER[MCP Server - Port 8082<br/>Database Tools]
     end
 
     subgraph "Analytics - Port 4242"

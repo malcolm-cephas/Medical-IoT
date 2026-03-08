@@ -4,6 +4,7 @@ import axios from 'axios';
 import Dashboard from './components/Dashboard';
 import MobileDashboard from './components/MobileDashboard';
 import Login from './components/Login';
+import Register from './components/Register';
 
 /**
  * Helper function to retrieve the initial user state from local storage.
@@ -90,6 +91,7 @@ function App() {
             If not, show Login component.
           */}
           <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <Login onLogin={setUser} />} />
+          <Route path="/register" element={user ? <Navigate to="/dashboard" replace /> : <Register />} />
 
           {/* 
             Dashboard Route:

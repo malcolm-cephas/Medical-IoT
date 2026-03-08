@@ -9,10 +9,10 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.malcolm</groupId>
-	<artifactId>medical-iot</artifactId>
+	<artifactId>auth-server</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>Medical IoT System</name>
-	<description>Decentralized Secure Medical IoT Monitoring System</description>
+	<name>Auth Server</name>
+	<description>Authentication Server for Medical IoT System</description>
 	<properties>
 		<java.version>21</java.version>
 	</properties>

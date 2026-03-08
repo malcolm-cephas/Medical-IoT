@@ -88,10 +88,16 @@ const DoctorAvailability = ({ user }) => {
         }
         setLoading(true);
 
+        const requestPayload = {
+            ...newSlot,
+            startTime: newSlot.startTime.length === 5 ? `${newSlot.startTime}:00` : newSlot.startTime,
+            endTime: newSlot.endTime.length === 5 ? `${newSlot.endTime}:00` : newSlot.endTime
+        };
+
         try {
             const response = await axios.post(
                 `${getBackendUrl()}/api/doctor/set-availability`,
-                newSlot,
+                requestPayload,
                 { headers: { 'X-User-Id': user.username } }
             );
             setMessage({ text: response.data.message, type: 'success' });

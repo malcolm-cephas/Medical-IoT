@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { getBackendUrl } from '../config';
+import { getAuthUrl } from '../config';
 
 /**
  * Login Component
@@ -32,8 +32,8 @@ const Login = ({ onLogin }) => {
         setLoading(true);
 
         try {
-            // Attempt to authenticate with backend
-            const response = await axios.post(`${getBackendUrl()}/api/auth/login`, {
+            // Attempt to authenticate with auth-server
+            const response = await axios.post(`${getAuthUrl()}/api/auth/login`, {
                 username,
                 password
             });
@@ -115,7 +115,7 @@ const Login = ({ onLogin }) => {
                 </form>
                 {/* Helper Section for Demo Credentials */}
                 <div className="login-help">
-                    <p>Don't have an account? <a href="#" style={{ color: 'var(--accent-color)' }}>Create Account</a></p>
+                    <p>Don't have an account? <span onClick={() => navigate('/register')} style={{ color: 'var(--accent-color)', cursor: 'pointer', textDecoration: 'underline' }}>Create Account</span></p>
                     <hr style={{ border: 0, borderTop: '1px solid rgba(255,255,255,0.1)', margin: '1rem 0' }} />
                     <p><strong>Demo Credentials:</strong></p>
                     <ul>

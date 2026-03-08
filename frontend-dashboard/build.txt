@@ -1,0 +1,169 @@
+﻿[36mvite v7.3.1 [32mbuilding client environment for production...[36m[39m
+transforming...
+node.exe : 
+[33m[plugin 
+vite:resolve] Module 
+"net" has been 
+externalized for 
+browser compatibility, 
+imported by 
+"D:/Malcolm/DSCE/Major 
+Project/Framework Rewor
+ked/Medical_IoT_System/
+frontend-dashboard/node
+_modules/stompjs/lib/st
+omp-node.js". See https
+://vite.dev/guide/troub
+leshooting.html#module-
+externalized-for-browse
+r-compatibility for 
+more details.[39m
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo 
+...
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: ([33m[plugin    
+ vi...e details.[3    
+9m:String) [], Rem    
+oteException
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+[32mΓ£ô[39m 191 modules transformed.
+[31mΓ£ù[39m Build 
+failed in 1.37s
+[31merror during 
+build:
+[31msrc/components/Cha
+tbot.jsx (3:9): 
+"getAiUrl" is not 
+exported by 
+"src/config.js", 
+imported by "src/compon
+ents/Chatbot.jsx".[31m
+file: [36mD:/Malcolm/D
+SCE/Major 
+Project/Framework Rewor
+ked/Medical_IoT_System/
+frontend-dashboard/src/
+components/Chatbot.jsx:
+3:9[31m
+[33m
+1: import React, { 
+useState, useRef, 
+useEffect } from 
+'react';
+2: import axios from 
+'axios';
+3: import { getAiUrl } 
+from '../config';
+            ^
+4: import 
+'./Chatbot.css';
+[31m
+    at getRollupError (
+file:///D:/Malcolm/DSCE
+/Major%20Project/Framew
+ork%20Reworked/Medical_
+IoT_System/frontend-das
+hboard/node_modules/vit
+e/node_modules/rollup/d
+ist/es/shared/parseAst.
+js:401:41)
+    at error (file:///D
+:/Malcolm/DSCE/Major%20
+Project/Framework%20Rew
+orked/Medical_IoT_Syste
+m/frontend-dashboard/no
+de_modules/vite/node_mo
+dules/rollup/dist/es/sh
+ared/parseAst.js:397:42
+)
+    at Module.error (fi
+le:///D:/Malcolm/DSCE/M
+ajor%20Project/Framewor
+k%20Reworked/Medical_Io
+T_System/frontend-dashb
+oard/node_modules/vite/
+node_modules/rollup/dis
+t/es/shared/node-entry.
+js:17025:16)
+    at 
+Module.traceVariable (f
+ile:///D:/Malcolm/DSCE/
+Major%20Project/Framewo
+rk%20Reworked/Medical_I
+oT_System/frontend-dash
+board/node_modules/vite
+/node_modules/rollup/di
+st/es/shared/node-entry
+.js:17481:29)
+    at ModuleScope.find
+Variable (file:///D:/Ma
+lcolm/DSCE/Major%20Proj
+ect/Framework%20Reworke
+d/Medical_IoT_System/fr
+ontend-dashboard/node_m
+odules/vite/node_module
+s/rollup/dist/es/shared
+/node-entry.js:15144:39
+)
+    at ReturnValueScope
+.findVariable (file:///
+D:/Malcolm/DSCE/Major%2
+0Project/Framework%20Re
+worked/Medical_IoT_Syst
+em/frontend-dashboard/n
+ode_modules/vite/node_m
+odules/rollup/dist/es/s
+hared/node-entry.js:568
+8:38)
+    at FunctionBodyScop
+e.findVariable (file://
+/D:/Malcolm/DSCE/Major%
+20Project/Framework%20R
+eworked/Medical_IoT_Sys
+tem/frontend-dashboard/
+node_modules/vite/node_
+modules/rollup/dist/es/
+shared/node-entry.js:56
+88:38)
+    at ReturnValueScope
+.findVariable (file:///
+D:/Malcolm/DSCE/Major%2
+0Project/Framework%20Re
+worked/Medical_IoT_Syst
+em/frontend-dashboard/n
+ode_modules/vite/node_m
+odules/rollup/dist/es/s
+hared/node-entry.js:568
+8:38)
+    at FunctionBodyScop
+e.findVariable (file://
+/D:/Malcolm/DSCE/Major%
+20Project/Framework%20R
+eworked/Medical_IoT_Sys
+tem/frontend-dashboard/
+node_modules/vite/node_
+modules/rollup/dist/es/
+shared/node-entry.js:56
+88:38)
+    at BlockScope.findV
+ariable (file:///D:/Mal
+colm/DSCE/Major%20Proje
+ct/Framework%20Reworked
+/Medical_IoT_System/fro
+ntend-dashboard/node_mo
+dules/vite/node_modules
+/rollup/dist/es/shared/
+node-entry.js:5688:38)
+[39m

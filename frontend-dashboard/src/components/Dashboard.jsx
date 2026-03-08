@@ -25,6 +25,7 @@ import SecurityAudit from './SecurityAudit';
 import SystemActivities from './SystemActivities';
 import PrescriptionPad from './PrescriptionPad';
 import PatientSidebar from './PatientSidebar';
+import Chatbot from './Chatbot';
 
 // Register Chart.js components globally
 ChartJS.register(
@@ -514,6 +515,9 @@ const Dashboard = ({ user, theme, toggleTheme, forceDetail }) => {
             </div>
           )}
         </div>
+
+        {/* AI Medical Assistant Chatbot Widget */}
+        <Chatbot />
 
         {/* Prescription Modal */}
         {showPrescriptionPad && (
