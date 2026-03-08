@@ -231,6 +231,215 @@ docker-compose down
 
 ## 🏗️ System Architecture
 
+The Medical IoT platform follows a **secure microservice architecture** integrating IoT devices, distributed services, and decentralized storage.
+
+---
+
+### 1️⃣ System Context
+
+```mermaid
+flowchart TD
+
+Patient[Patient]
+Doctor[Doctor]
+Nurse[Nurse]
+Admin[Admin]
+
+Browser[Web Browser UI]
+
+Sensors[Medical Sensors]
+Arduino[Arduino IoT Node]
+
+Platform[Medical IoT Platform]
+
+IPFS[(IPFS Network)]
+Blockchain[(Blockchain Audit Ledger)]
+
+Patient --> Browser
+Doctor --> Browser
+Nurse --> Browser
+Admin --> Browser
+
+Sensors --> Arduino
+Arduino --> Platform
+
+Browser --> Platform
+
+Platform --> IPFS
+Platform --> Blockchain
+```
+
+---
+
+### 2️⃣ Microservice Architecture
+
+```mermaid
+flowchart LR
+
+Frontend[React Frontend :5173]
+
+CoreAPI[Spring Boot Core Backend :8080]
+
+AuthServer[Auth Server :8081]
+
+Analytics[Python FastAPI Analytics :4242]
+
+MCPClient[MCP Client :8083]
+MCPServer[MCP Server :8082]
+
+MySQL[(MySQL Database)]
+IPFS[(IPFS Storage)]
+Ledger[(Blockchain Ledger)]
+
+Frontend --> CoreAPI
+Frontend --> AuthServer
+Frontend --> MCPClient
+
+CoreAPI --> MySQL
+CoreAPI --> Analytics
+CoreAPI --> AuthServer
+CoreAPI --> IPFS
+CoreAPI --> Ledger
+
+MCPClient --> MCPServer
+MCPServer --> CoreAPI
+```
+
+---
+
+### 3️⃣ Backend Architecture
+
+```mermaid
+flowchart TD
+
+SensorController
+ConsentController
+AppointmentController
+DoctorAvailabilityController
+EmergencyOverrideController
+
+AppointmentService
+DoctorAvailabilityService
+UserService
+IPFSService
+BlockchainService
+AnalyticsService
+LockdownService
+
+SensorRepository
+ConsentRepository
+AppointmentRepository
+DoctorAvailabilityRepository
+UserRepository
+
+MySQL[(MySQL)]
+
+SensorController --> AnalyticsService
+SensorController --> UserService
+
+ConsentController --> BlockchainService
+ConsentController --> UserService
+
+AppointmentController --> AppointmentService
+DoctorAvailabilityController --> DoctorAvailabilityService
+
+AppointmentService --> AppointmentRepository
+DoctorAvailabilityService --> DoctorAvailabilityRepository
+UserService --> UserRepository
+
+SensorRepository --> MySQL
+ConsentRepository --> MySQL
+AppointmentRepository --> MySQL
+DoctorAvailabilityRepository --> MySQL
+UserRepository --> MySQL
+```
+
+---
+
+### 4️⃣ Authentication Architecture
+
+```mermaid
+flowchart TD
+
+AuthController
+SecurityController
+
+JwtAuthenticationFilter
+JwtService
+CustomUserDetailsService
+SecurityConfig
+
+UserRepository
+
+MySQL[(MySQL)]
+
+AuthController --> JwtService
+AuthController --> CustomUserDetailsService
+
+JwtAuthenticationFilter --> JwtService
+JwtAuthenticationFilter --> CustomUserDetailsService
+
+CustomUserDetailsService --> UserRepository
+
+UserRepository --> MySQL
+```
+
+---
+
+### 5️⃣ Real-Time Vitals Data Flow
+
+```mermaid
+sequenceDiagram
+
+participant Device as Arduino IoT Device
+participant Backend as Core Backend
+participant DB as MySQL
+participant WS as WebSocket
+participant UI as React Dashboard
+
+Device->>Backend: POST /api/sensor/upload
+Backend->>DB: Store SensorData
+Backend->>WS: Broadcast vitals update
+WS->>UI: Push realtime vitals
+UI->>UI: Update charts and alerts
+```
+
+---
+
+### 6️⃣ Deployment Architecture
+
+```mermaid
+flowchart TD
+
+Browser[User Browser]
+
+subgraph Docker Host
+Frontend[Frontend Container :5173]
+CoreBackend[Backend Container :8080]
+AuthServer[Auth Container :8081]
+Analytics[Analytics Container :4242]
+MCPClient[MCP Client :8083]
+MCPServer[MCP Server :8082]
+MySQL[(MySQL Container :3306)]
+end
+
+Browser --> Frontend
+
+Frontend --> CoreBackend
+Frontend --> AuthServer
+Frontend --> MCPClient
+
+CoreBackend --> MySQL
+CoreBackend --> Analytics
+CoreBackend --> AuthServer
+
+MCPClient --> MCPServer
+MCPServer --> CoreBackend
+```
+
+
+
+### 7️⃣ Overall Architecture
 ```mermaid
 graph TB
     subgraph "Client Layer"
@@ -390,6 +599,39 @@ graph TB
     class MYSQL,IPFS,BLOCKCHAIN,USERS,SENSORS,CONSENTS,SECURITY,DOCAVAIL,APPOINTMENTS database
     class SECCONF,ABE,ECDH,IPFSSVC,BLOCKSVC,LOCKSVC security
 ```
+
+---
+### Key Components
+
+**Frontend (React)**
+- Multi-role dashboards
+- Real-time patient monitoring
+- Consent management
+- Appointment scheduling
+- Secure image transfer
+
+**Backend (Spring Boot)**
+- Sensor data ingestion
+- Consent enforcement
+- Appointment system
+- Policy engine
+- Security event monitoring
+
+**Analytics Service (Python)**
+- Attribute-Based Encryption (ABE)
+- ECDH image encryption
+- Image processing
+
+**Data Layer**
+- MySQL database
+- IPFS decentralized storage
+- Blockchain audit ledger
+
+**Edge Layer**
+- Arduino Uno R4 WiFi
+- MAX30102 pulse oximeter
+- DHT22 environmental sensor
+- AD8232 ECG sensor
 
 ### Key Components:
 
