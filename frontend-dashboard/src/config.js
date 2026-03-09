@@ -6,7 +6,7 @@ export const getBackendUrl = () => {
 
 export const getAuthUrl = () => {
     const hostname = window.location.hostname;
-    const port = import.meta.env.VITE_AUTH_PORT || '8081';
+    const port = import.meta.env.VITE_AUTH_PORT || '8080';
     return `http://${hostname}:${port}`;
 };
 

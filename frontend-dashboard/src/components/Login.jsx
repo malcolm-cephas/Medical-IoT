@@ -32,7 +32,7 @@ const Login = ({ onLogin }) => {
         setLoading(true);
 
         try {
-            // Attempt to authenticate with auth-server
+            // Attempt to authenticate with unified backend
             const response = await axios.post(`${getAuthUrl()}/api/auth/login`, {
                 username,
                 password

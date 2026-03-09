@@ -13,9 +13,17 @@ public class User {
     @Column(unique = true, nullable = false)
     private String username;
 
+    @Column(nullable = false)
+    private String password;
+
+    @Column(nullable = false)
     private String role;
+
     private String department;
+    private String attributes;
     private String fullName;
+    private int age;
+    private String gender;
 
     public User() {
     }
@@ -36,6 +44,14 @@ public class User {
         this.username = username;
     }
 
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
     public String getRole() {
         return role;
     }
@@ -52,11 +68,35 @@ public class User {
         this.department = department;
     }
 
+    public String getAttributes() {
+        return attributes;
+    }
+
+    public void setAttributes(String attributes) {
+        this.attributes = attributes;
+    }
+
     public String getFullName() {
         return fullName;
     }
 
     public void setFullName(String fullName) {
         this.fullName = fullName;
+    }
+
+    public int getAge() {
+        return age;
+    }
+
+    public void setAge(int age) {
+        this.age = age;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
     }
 }

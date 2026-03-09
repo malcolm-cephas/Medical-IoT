@@ -88,6 +88,10 @@ Thumbs.db
 *.bak
 *.old
 
+# Custom Temp Files
+run_output_*.txt
+models.txt
+
 # Keys (keep structure but not actual keys in public repos)
 # Uncomment if you want to exclude keys completely:
 # *.pem

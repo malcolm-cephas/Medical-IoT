@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class ChatService {
@@ -75,7 +76,8 @@ public class ChatService {
 
         this.chatClient = chatClientBuilder
                 .defaultSystem(systemPrompt)
-                .defaultToolCallbacks(toolCallbackProviders.toArray(new ToolCallbackProvider[0]))
+                .defaultToolCallbacks(
+                        Objects.requireNonNull(toolCallbackProviders.toArray(new ToolCallbackProvider[0])))
                 .build();
     }
 
@@ -91,8 +93,8 @@ public class ChatService {
             try {
                 logger.info("[EVAL] Step: LLM_CALL | Model: {} | Attempt: {}", currentModel, attempts + 1);
                 String response = chatClient.prompt()
-                        .user(promptText)
-                        .options(OpenAiChatOptions.builder().model(currentModel).build())
+                        .user(Objects.requireNonNull(promptText))
+                        .options(Objects.requireNonNull(OpenAiChatOptions.builder().model(currentModel).build()))
                         .call()
                         .content();
 

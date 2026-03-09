@@ -99,23 +99,15 @@ FLUSH PRIVILEGES;
 
 ### 2. Microservices Setup
 
-**Terminal 1: Auth Server**
-```bash
-cd auth-server
-mvn clean install
-mvn spring-boot:run
-```
-*(Runs on http://localhost:8081)*
-
-**Terminal 2: Core Backend**
+**Terminal 1: Core Backend**
 ```bash
 cd backend-spring
 mvn clean install
 mvn spring-boot:run
 ```
-*(Runs on http://localhost:8080)*
+*(Runs on http://localhost:8080 - Handles both Business Logic and Authentication)*
 
-**Terminal 3: AI MCP Server**
+**Terminal 2: AI MCP Server**
 ```bash
 cd ai/mcp-server
 mvn clean install
@@ -123,7 +115,7 @@ mvn spring-boot:run
 ```
 *(Runs on http://localhost:8082)*
 
-**Terminal 4: AI MCP Client**
+**Terminal 3: AI MCP Client**
 ```bash
 cd ai/mcp-client
 mvn clean install
@@ -161,7 +153,7 @@ python mock_data_generator.py
 
 ## 🎯 One-Click Startup
 
-Use the provided batch script to start all 6 services simultaneously:
+Use the provided batch script to start all 5 services simultaneously:
 
 ```bash
 run_all.bat
@@ -184,7 +176,6 @@ docker-compose up --build
 This will automatically start:
 - **MySQL Database**: Port 3306
 - **Core Backend**: Port 8080
-- **Auth Server**: Port 8081
 - **AI MCP Server**: Port 8082
 - **AI MCP Client**: Port 8083
 - **Analytics Service**: Port 4242
@@ -280,8 +271,6 @@ Frontend[React Frontend :5173]
 
 CoreAPI[Spring Boot Core Backend :8080]
 
-AuthServer[Auth Server :8081]
-
 Analytics[Python FastAPI Analytics :4242]
 
 MCPClient[MCP Client :8083]
@@ -292,12 +281,10 @@ IPFS[(IPFS Storage)]
 Ledger[(Blockchain Ledger)]
 
 Frontend --> CoreAPI
-Frontend --> AuthServer
 Frontend --> MCPClient
 
 CoreAPI --> MySQL
 CoreAPI --> Analytics
-CoreAPI --> AuthServer
 CoreAPI --> IPFS
 CoreAPI --> Ledger
 
@@ -426,12 +413,10 @@ end
 Browser --> Frontend
 
 Frontend --> CoreBackend
-Frontend --> AuthServer
 Frontend --> MCPClient
 
 CoreBackend --> MySQL
 CoreBackend --> Analytics
-CoreBackend --> AuthServer
 
 MCPClient --> MCPServer
 MCPServer --> CoreBackend
@@ -459,6 +444,7 @@ graph TB
         API[Spring Boot REST API]
         
         subgraph "Controllers"
+            AUTH[Auth Controller]
             SENSOR[Sensor Controller]
             CONS[Consent Controller]
             DOC[Doctor Controller]
@@ -466,6 +452,7 @@ graph TB
         end
         
         subgraph "Services"
+            USERSVC[User Service]
             SENSVC[Sensor Service]
             CONSVC[Consent Service]
             DOCAVSVC[Availability Service]
@@ -480,11 +467,6 @@ graph TB
             ABE[ABE Encryption]
             ECDH[ECDH Encryption]
         end
-    end
-    
-    subgraph "Auth Server - Port 8081"
-        AUTH[Auth Controller]
-        USERSVC[User Service]
     end
     
     subgraph "AI System"
