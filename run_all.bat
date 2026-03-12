@@ -8,6 +8,8 @@ if not exist "Logs" mkdir "Logs"
 type nul > Logs\backend.log
 type nul > Logs\frontend.log
 type nul > Logs\analytics.log
+type nul > Logs\mcp-server.log
+type nul > Logs\mcp-client.log
 
 :: Start Applications
 echo ===========================================

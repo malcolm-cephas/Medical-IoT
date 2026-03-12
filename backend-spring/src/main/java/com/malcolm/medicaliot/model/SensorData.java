@@ -34,6 +34,10 @@ public class SensorData {
     private int systolicBP; // Systolic Blood Pressure (mmHg)
     private int diastolicBP; // Diastolic Blood Pressure (mmHg)
 
+    // --- Clinical Assessment ---
+    private String conditionStatus; // e.g., STABLE, CRITICAL, IMPROVING
+    private String clinicalDiagnosis; // Doctor's notes or automated analysis
+
     // --- Environmental Context ---
 
     private float humidity; // Room Humidity (%) - useful for respiratory context
@@ -51,7 +55,7 @@ public class SensorData {
      * Parameterized constructor for creating new sensor data instances.
      */
     public SensorData(Long id, String patientId, int heartRate, int spo2, float temperature, int systolicBP,
-            int diastolicBP, float humidity, LocalDateTime timestamp) {
+            int diastolicBP, String conditionStatus, String clinicalDiagnosis, float humidity, LocalDateTime timestamp) {
         this.id = id;
         this.patientId = patientId;
         this.heartRate = heartRate;
@@ -59,6 +63,8 @@ public class SensorData {
         this.temperature = temperature;
         this.systolicBP = systolicBP;
         this.diastolicBP = diastolicBP;
+        this.conditionStatus = conditionStatus;
+        this.clinicalDiagnosis = clinicalDiagnosis;
         this.humidity = humidity;
         this.timestamp = timestamp;
     }
@@ -144,5 +150,21 @@ public class SensorData {
 
     public void setTimestamp(LocalDateTime timestamp) {
         this.timestamp = timestamp;
+    }
+
+    public String getConditionStatus() {
+        return conditionStatus;
+    }
+
+    public void setConditionStatus(String conditionStatus) {
+        this.conditionStatus = conditionStatus;
+    }
+
+    public String getClinicalDiagnosis() {
+        return clinicalDiagnosis;
+    }
+
+    public void setClinicalDiagnosis(String clinicalDiagnosis) {
+        this.clinicalDiagnosis = clinicalDiagnosis;
     }
 }
