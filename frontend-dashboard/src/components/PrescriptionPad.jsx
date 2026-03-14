@@ -1,7 +1,7 @@
-
 import React, { useState } from 'react';
 import axios from 'axios';
 import { getBackendUrl } from '../config';
+import FaceVerification from './FaceVerification';
 
 /**
  * PrescriptionPad Component
@@ -26,13 +26,18 @@ const PrescriptionPad = ({ doctorId, selectedPatientId, onClose }) => {
     // State to manage success feedback to the user
     const [success, setSuccess] = useState(false);
 
+    // Biometric 2FA State
+    const [showFaceVerify, setShowFaceVerify] = useState(false);
+    const [biometricData, setBiometricData] = useState(null);
+
     /**
      * Handles the form submission to create a new prescription.
      *
      * @param {Event} e - The submit event
+     * @param {Array} facialDescriptor - Optional facial descriptor for biometric 2FA
      */
-    const handleSubmit = async (e) => {
-        e.preventDefault(); // Prevent default HTML form submission behavior
+    const handleSubmit = async (e, facialDescriptor = null) => {
+        if (e) e.preventDefault(); // Prevent default HTML form submission behavior
 
         // Validation: Ensure a patient is selected
         if (!selectedPatientId) {
@@ -42,6 +47,8 @@ const PrescriptionPad = ({ doctorId, selectedPatientId, onClose }) => {
 
         setLoading(true); // Start loading state
         try {
+            const descriptorToUse = facialDescriptor || biometricData;
+            
             // Make a POST request to the backend to save the prescription
             await axios.post(`${getBackendUrl()}/api/prescriptions/add`, {
                 doctorId: doctorId, // Pass doctor ID (User context)
@@ -49,10 +56,16 @@ const PrescriptionPad = ({ doctorId, selectedPatientId, onClose }) => {
                 diagnosis,
                 medicine,
                 notes
+            }, {
+                headers: {
+                    'X-User-Id': doctorId,
+                    'X-Biometric-Data': descriptorToUse ? JSON.stringify(descriptorToUse) : ''
+                }
             });
 
             // If successful, show success message
             setSuccess(true);
+            setShowFaceVerify(false);
 
             // Reset form and close component after a short delay
             setTimeout(() => {
@@ -64,14 +77,36 @@ const PrescriptionPad = ({ doctorId, selectedPatientId, onClose }) => {
             }, 2000);
         } catch (error) {
             console.error("Error creating prescription:", error);
-            alert("Failed to save prescription.");
+            
+            // Handle 2FA Requirement
+            if (error.response && error.response.status === 403 && error.response.data['2fa_required']) {
+                setShowFaceVerify(true);
+            } else {
+                alert(error.response?.data?.error || "Failed to save prescription.");
+            }
         } finally {
             setLoading(false); // Stop loading state regardless of success or failure
         }
     };
 
+    const handleFaceSuccess = (descriptor) => {
+        setBiometricData(descriptor);
+        // Retry submission with the captured descriptor
+        handleSubmit(null, descriptor);
+    };
+
     return (
         <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
+            {/* Biometric Modal Overlay */}
+            {showFaceVerify && (
+                <FaceVerification 
+                    username={doctorId} 
+                    mode="verify" 
+                    onSuccess={handleFaceSuccess} 
+                    onCancel={() => setShowFaceVerify(false)} 
+                />
+            )}
+
             {/* Header Section */}
             <div className="flex justify-between items-center mb-4">
                 <h3 className="text-xl font-bold text-indigo-700 flex items-center">

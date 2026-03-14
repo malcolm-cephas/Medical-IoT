@@ -50,32 +50,17 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // Configure Cross-Origin Resource Sharing (CORS) with default settings
                 .cors(withDefaults())
-                // Disable Cross-Site Request Forgery (CSRF) protection
-                // (Common for stateless APIs where tokens are used instead of cookies)
                 .csrf(csrf -> csrf.disable())
-                // Disable X-Frame-Options to allow H2 console or other iframes if needed
                 .headers(headers -> headers.frameOptions(frame -> frame.disable()))
-                // Define authorization rules for specific HTTP requests
                 .authorizeHttpRequests(auth -> auth
-                        // Public endpoints (no authentication required)
-                        .requestMatchers("/api/auth/**").permitAll() // Login/Register endpoints
-                        .requestMatchers("/ws-vitals/**").permitAll() // WebSocket endpoints (Handshake)
-                        .requestMatchers("/error").permitAll() // Error page
-                        // All other requests require authentication
+                        .requestMatchers("/api/auth/**").permitAll() 
+                        .requestMatchers("/ws-vitals/**").permitAll()
+                        .requestMatchers("/error").permitAll()
                         .anyRequest().authenticated())
-                // Enable HTTP Basic Authentication to support the mock_data_generator.py script
-                .httpBasic(withDefaults())
-                // Configure session management to be stateless
-                // (The server does not keep session state; each request is authenticated via
-                // token)
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                // Set the authentication provider containing logic for checking user details
                 .authenticationProvider(authenticationProvider())
-                // Add the JWT filter before the standard UsernamePasswordAuthenticationFilter
-                // This ensures tokens are checked before other authentication mechanisms
                 .addFilterBefore(jwtAuthFilter,
                         org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
 

@@ -22,3 +22,9 @@ export const getAiUrl = () => {
     return `http://${hostname}:${port}/api/chat`;
 };
 
+export const getChatMemoryUrl = () => {
+    const hostname = window.location.hostname;
+    const port = import.meta.env.VITE_AI_PORT || '8083';
+    return `http://${hostname}:${port}/api/chat-memory`;
+};
+

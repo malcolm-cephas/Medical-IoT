@@ -26,6 +26,7 @@ import SystemActivities from './SystemActivities';
 import PrescriptionPad from './PrescriptionPad';
 import PatientSidebar from './PatientSidebar';
 import Chatbot from './Chatbot';
+import FaceVerification from './FaceVerification';
 
 // Register Chart.js components globally
 ChartJS.register(
@@ -81,6 +82,7 @@ const Dashboard = ({ user, theme, toggleTheme, forceDetail }) => {
   // UI Toggles
   const [showPrescriptionPad, setShowPrescriptionPad] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
+  const [showFaceEnroll, setShowFaceEnroll] = useState(false);
 
   /**
    * Requests browser permission for push notifications using the Notification API.
@@ -342,6 +344,22 @@ const Dashboard = ({ user, theme, toggleTheme, forceDetail }) => {
     }
   };
 
+  const handleFaceEnroll = async (descriptor) => {
+    try {
+        await axios.post(`${getBackendUrl()}/api/auth/biometric/enroll`, {
+            username: user.username,
+            descriptor: JSON.stringify(descriptor)
+        });
+        alert("Face ID Enrolled Successfully!");
+        setShowFaceEnroll(false);
+    } catch (err) {
+        console.error("Enrollment failed", err);
+        const errorMsg = err.response?.data?.error || err.response?.data || err.message;
+        const finalMsg = typeof errorMsg === 'object' ? JSON.stringify(errorMsg) : errorMsg;
+        alert("Biometric Error: " + finalMsg);
+    }
+  };
+
   const togglePerformance = async () => {
     if (!showPerf) {
       try {
@@ -446,6 +464,16 @@ const Dashboard = ({ user, theme, toggleTheme, forceDetail }) => {
             borderRadius: '4px',
             cursor: 'pointer'
           }}>Logout</button>
+          
+          {/* Biometric Setup Button */}
+          {user.role === 'doctor' && (
+             <button onClick={() => setShowFaceEnroll(true)} style={{
+                background: 'var(--accent-color)', color: 'white', border: 'none',
+                padding: '0.25rem 0.75rem', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem'
+              }}>
+                📷 Face ID Setup
+              </button>
+          )}
         </div>
       </header>
 
@@ -518,6 +546,16 @@ const Dashboard = ({ user, theme, toggleTheme, forceDetail }) => {
 
         {/* AI Medical Assistant Chatbot Widget */}
         <Chatbot />
+
+        {/* Biometric Enrollment Modal */}
+        {showFaceEnroll && (
+            <FaceVerification 
+                username={user.username} 
+                mode="enroll" 
+                onSuccess={handleFaceEnroll} 
+                onCancel={() => setShowFaceEnroll(false)} 
+            />
+        )}
 
         {/* Prescription Modal */}
         {showPrescriptionPad && (

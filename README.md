@@ -20,6 +20,9 @@ A comprehensive, decentralized health monitoring system built with **Spring Boot
 - **Security Audit Dashboard**: Real-time visualization of the immutable blockchain ledger and security events
 
 ### Security & Privacy
+- **Face-ID Biometric 2FA**: AI-powered facial recognition using `face-api.js` for authorizing critical medical actions (Prescriptions, Completions).
+- **Consent-Verified AI Tools**: AI assistants (GPT/Groq) now verify doctor-patient consent before accessing any medical records. (Tool-level security).
+- **Memory-Aware Medical Assistant**: Persistent chat history allowing the AI to remember context across conversations.
 - **Attribute-Based Encryption (ABE)**: Fine-grained access control for patient data
 - **ECDH Image Encryption**: Secure medical image transfer with scrambling
 - **IPFS Integration**: Decentralized storage for encrypted health records
@@ -289,7 +292,9 @@ CoreAPI --> IPFS
 CoreAPI --> Ledger
 
 MCPClient --> MCPServer
+MCPClient --> MySQL
 MCPServer --> CoreAPI
+MCPServer --> MySQL
 ```
 
 ---
@@ -470,8 +475,8 @@ graph TB
     end
     
     subgraph "AI System"
-        MCPCLIENT[MCP Client - Port 8083<br/>LLM Router]
-        MCPSERVER[MCP Server - Port 8082<br/>Database Tools]
+        MCPCLIENT[MCP Client - Port 8083<br/>LLM Router & Session Memory]
+        MCPSERVER[MCP Server - Port 8082<br/>Medical Tools & Access Guard]
     end
 
     subgraph "Analytics - Port 4242"
@@ -493,6 +498,7 @@ graph TB
         SECURITY[security_events]
         DOCAVAIL[doctor_availability]
         APPOINTMENTS[appointments]
+        MEMORY[chat_memory<br/>(session metadata)]
     end
 
     subgraph "External Systems"
@@ -677,6 +683,12 @@ graph TB
 - `GET /api/patient/appointments` - Get all patient appointments
 - `POST /api/patient/appointments/{appointmentId}/cancel` - Cancel an appointment
 
+### Chat Memory (NEW)
+- `GET /api/chat-memory` - Get list of past conversations for the user
+- `GET /api/chat-memory/{chatId}` - Retrieve full message history for a specific session
+- `POST /api/chat-memory/start` - Initialize a new conversation with AI-generated title
+- `POST /api/chat-memory/{chatId}` - Continue a session with context-aware memory
+
 ### Emergency
 - `POST /api/emergency/override` - Break-glass access
 
@@ -764,6 +776,14 @@ This is an academic project for demonstration purposes. All rights reserved. See
 - Built as part of Major Project at DSCE
 - Uses Charm-Crypto library for ABE implementation
 - Inspired by modern healthcare security requirements
+
+### AI & Architecture References
+- [SpringAI_Test](https://github.com/malcolm-cephas/SpringAI_Test) - MCP Client/Server Architecture
+- [opencode-antigravity-autopilot](https://github.com/Gooseware/opencode-antigravity-autopilot) - Model Switching Inspiration
+- [Building an AI Chat with Memory (Context) using Spring AI and Angular](https://loiane.com/2025/10/building-ai-chat-with-memory-using-spring-ai-and-angular/)
+- [Chat Memory in Spring AI](https://www.baeldung.com/spring-ai-chat-memory)
+- [Securing MCP Servers with Spring AI](https://spring.io/blog/2025/09/30/spring-ai-mcp-server-security)
+- [Securing Spring AI MCP Servers With OAuth2](https://www.baeldung.com/spring-ai-mcp-servers-oauth2)
   
 ---
 

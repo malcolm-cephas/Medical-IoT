@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS CHAT_MEMORY (
+    conversation_id VARCHAR(36) PRIMARY KEY,
+    user_id VARCHAR(256),
+    description VARCHAR(256),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
