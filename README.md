@@ -108,9 +108,17 @@ cd backend-spring
 mvn clean install
 mvn spring-boot:run
 ```
-*(Runs on http://localhost:8080 - Handles both Business Logic and Authentication)*
+*(Runs on http://localhost:8080 - Business Logic)*
 
-**Terminal 2: AI MCP Server**
+**Terminal 2: Auth Server**
+```bash
+cd medical-auth-server
+mvn clean install
+mvn spring-boot:run
+```
+*(Runs on http://localhost:9000 - Dedicated Authentication & Biometric Portal)*
+
+**Terminal 3: AI MCP Server**
 ```bash
 cd ai/mcp-server
 mvn clean install
@@ -118,7 +126,7 @@ mvn spring-boot:run
 ```
 *(Runs on http://localhost:8082)*
 
-**Terminal 3: AI MCP Client**
+**Terminal 4: AI MCP Client**
 ```bash
 cd ai/mcp-client
 mvn clean install
@@ -135,6 +143,9 @@ uvicorn main:app --reload --port 4242
 ```
 
 The analytics service will start on `http://localhost:4242`
+
+### 4. Admin Setup (Auth Port)
+Ensure Port 9000 is open. The frontend communicates with Port 9000 specifically for Biometric Enrollment and JWT generation.
 
 ### 4. Frontend Setup
 
@@ -273,6 +284,7 @@ flowchart LR
 Frontend[React Frontend :5173]
 
 CoreAPI[Spring Boot Core Backend :8080]
+AuthServer[Dedicated Auth Server :9000]
 
 Analytics[Python FastAPI Analytics :4242]
 
@@ -280,12 +292,15 @@ MCPClient[MCP Client :8083]
 MCPServer[MCP Server :8082]
 
 MySQL[(MySQL Database)]
+H2[(H2 Auth DB)]
 IPFS[(IPFS Storage)]
 Ledger[(Blockchain Ledger)]
 
 Frontend --> CoreAPI
+Frontend --> AuthServer
 Frontend --> MCPClient
 
+AuthServer --> H2
 CoreAPI --> MySQL
 CoreAPI --> Analytics
 CoreAPI --> IPFS
@@ -295,6 +310,7 @@ MCPClient --> MCPServer
 MCPClient --> MySQL
 MCPServer --> CoreAPI
 MCPServer --> MySQL
+MCPServer --> AuthServer
 ```
 
 ---
