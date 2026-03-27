@@ -29,12 +29,14 @@ public class BiometricController {
         String descriptor = (String) request.get("descriptor");
 
         try {
-            if (username == null || descriptor == null) {
-                return ResponseEntity.badRequest().body(Map.of("error", "Username and descriptor required"));
+            if (username == null || (descriptor == null && request.get("image") == null)) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Username and biometric data required"));
             }
 
-            biometricService.enroll(username, descriptor);
-            return ResponseEntity.ok(Map.of("message", "Biometric enrollment successful"));
+            String imageBase64 = (String) request.get("image"); // Raw captured image for MySQL storage
+
+            biometricService.enroll(username, descriptor, imageBase64);
+            return ResponseEntity.ok(Map.of("message", "Biometric enrollment and Image archival successful"));
             
         } catch (Exception e) {
             e.printStackTrace();

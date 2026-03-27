@@ -41,6 +41,10 @@ public class User {
     @Column(columnDefinition = "TEXT")
     private String faceDescriptor;
 
+    @Lob
+    @Column(name = "profile_image", columnDefinition = "LONGBLOB")
+    private byte[] profileImage;
+
     public User() {
     }
 
@@ -91,4 +95,7 @@ public class User {
 
     public String getFaceDescriptor() { return faceDescriptor; }
     public void setFaceDescriptor(String faceDescriptor) { this.faceDescriptor = faceDescriptor; }
+
+    public byte[] getProfileImage() { return profileImage; }
+    public void setProfileImage(byte[] profileImage) { this.profileImage = profileImage; }
 }

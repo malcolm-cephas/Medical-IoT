@@ -11,3 +11,9 @@ matplotlib
 scikit-image
 scipy
 pydicom
+face-recognition
+dlib
+imutils
+ultralytics
+torch
+torchvision

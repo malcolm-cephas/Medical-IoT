@@ -10,6 +10,7 @@ import base64
 import json
 from abe_engine import abe
 from ecdh_engine import ecdh
+from biometric_engine import biometric_engine
 
 app = FastAPI()
 
@@ -44,6 +45,13 @@ class EncryptImageRequest(BaseModel):
 
 class DecryptImageRequest(BaseModel):
     encrypted_base64: str
+
+class BiometricExtractRequest(BaseModel):
+    image_base64: str
+
+class BiometricVerifyRequest(BaseModel):
+    stored_descriptor: List[float]
+    image_base64: str
 
 # --- Endpoints ---
 
@@ -83,6 +91,28 @@ def decrypt_image_endpoint(req: DecryptImageRequest):
         return {"decrypted_image": decrypted_base64}
     except Exception as e:
         print(f"Image Decryption Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/biometric/extract")
+def extract_biometric_endpoint(req: BiometricExtractRequest):
+    try:
+        result = biometric_engine.extract_descriptor(req.image_base64)
+        if "error" in result:
+            raise HTTPException(status_code=400, detail=result.get("error", "Unknown extraction error"))
+        return result
+    except Exception as e:
+        print(f"Biometric Extract Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/biometric/verify")
+def verify_biometric_endpoint(req: BiometricVerifyRequest):
+    try:
+        result = biometric_engine.verify(req.stored_descriptor, req.image_base64)
+        if "error" in result:
+            raise HTTPException(status_code=400, detail=result.get("error", "Unknown verification error"))
+        return result
+    except Exception as e:
+        print(f"Biometric Verify Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/analyze")

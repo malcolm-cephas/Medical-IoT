@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import SockJS from 'sockjs-client';
 import Stomp from 'stompjs';
-import { getBackendUrl } from '../config';
+import { getBackendUrl, getAuthUrl, getAnalyticsUrl } from '../config';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -83,6 +83,7 @@ const Dashboard = ({ user, theme, toggleTheme, forceDetail }) => {
   const [showPrescriptionPad, setShowPrescriptionPad] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
   const [showFaceEnroll, setShowFaceEnroll] = useState(false);
+  const [isBiometricEnrolled, setIsBiometricEnrolled] = useState(false);
 
   /**
    * Requests browser permission for push notifications using the Notification API.
@@ -131,6 +132,20 @@ const Dashboard = ({ user, theme, toggleTheme, forceDetail }) => {
     if (user && user.role === 'patient') {
       setPatientId(user.username);
     }
+  }, [user]);
+
+  // Check biometric enrollment status on mount (or when user changes)
+  useEffect(() => {
+    const checkBiometricStatus = async () => {
+        if (!user || !user.username) return;
+        try {
+            const response = await axios.get(`${getAuthUrl()}/api/auth/biometric/status/${user.username}`);
+            setIsBiometricEnrolled(response.data.enrolled);
+        } catch (error) {
+            console.error("Failed to check biometric status", error);
+        }
+    };
+    checkBiometricStatus();
   }, [user]);
 
   // --- Data Fetching and WebSockets ---
@@ -344,19 +359,38 @@ const Dashboard = ({ user, theme, toggleTheme, forceDetail }) => {
     }
   };
 
-  const handleFaceEnroll = async (descriptor) => {
+  const handleFaceEnroll = async (imageData) => {
+    console.log("DEBUG: handleFaceEnroll triggered with image data");
     try {
-        await axios.post(`${getBackendUrl()}/api/auth/biometric/enroll`, {
-            username: user.username,
-            descriptor: JSON.stringify(descriptor)
+        // High-Precision extraction using Python + Ultralytics (Port 4242)
+        const extractUrl = `${getAnalyticsUrl()}/biometric/extract`;
+        console.log("DEBUG: Calling Python Extractor", extractUrl);
+        
+        const extractRes = await axios.post(extractUrl, {
+            image_base64: imageData
         });
-        alert("Face ID Enrolled Successfully!");
+        
+        const descriptor = extractRes.data.descriptor;
+        console.log("DEBUG: Descriptor extracted from Python", descriptor);
+
+        // Security Persistence using Java Auth Server (Port 9000)
+        const saveUrl = `${getAuthUrl()}/api/auth/biometric/enroll`;
+        console.log("DEBUG: Saving to Auth Server", saveUrl);
+        
+        await axios.post(saveUrl, {
+            username: user.username,
+            descriptor: JSON.stringify(descriptor),
+            image: imageData // Port 9000 will now store this in MySQL as a BLOB
+        });
+        
+        console.log("DEBUG: Enrollment successful");
+        alert("Face ID Enrolled Successfully via Python AI!");
+        setIsBiometricEnrolled(true);
         setShowFaceEnroll(false);
     } catch (err) {
-        console.error("Enrollment failed", err);
-        const errorMsg = err.response?.data?.error || err.response?.data || err.message;
-        const finalMsg = typeof errorMsg === 'object' ? JSON.stringify(errorMsg) : errorMsg;
-        alert("Biometric Error: " + finalMsg);
+        console.error("DEBUG: Enrollment failed", err);
+        const errorMsg = err.response?.data?.detail || err.response?.data?.error || err.message;
+        alert("Biometric Error (Python): " + errorMsg);
     }
   };
 
@@ -757,6 +791,9 @@ const Dashboard = ({ user, theme, toggleTheme, forceDetail }) => {
                   <div className="form-group" style={{ maxWidth: '300px' }}>
                     <label>Monitor Patient ID:</label>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <button onClick={() => setShowFaceEnroll(true)} className="btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            {isBiometricEnrolled ? '✅ Face ID Active' : '📷 Face ID Setup'}
+          </button>
                       <input
                         type="text"
                         value={patientId}

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { getBackendUrl } from '../config';
+import { getBackendUrl, getAnalyticsUrl } from '../config';
 import FaceVerification from './FaceVerification';
 
 /**
@@ -89,10 +89,22 @@ const PrescriptionPad = ({ doctorId, selectedPatientId, onClose }) => {
         }
     };
 
-    const handleFaceSuccess = (descriptor) => {
-        setBiometricData(descriptor);
-        // Retry submission with the captured descriptor
-        handleSubmit(null, descriptor);
+    const handleFaceSuccess = async (imageData) => {
+        try {
+            // Transform raw capture to 128-d vector via Python AI
+            const res = await axios.post(`${getAnalyticsUrl()}/biometric/extract`, {
+                image_base64: imageData
+            });
+            const descriptor = res.data.descriptor;
+            setBiometricData(descriptor);
+            
+            // Retry submission with the AI-extracted descriptor
+            await handleSubmit(null, descriptor);
+        } catch (err) {
+            console.error("Verification extraction failed", err);
+            alert("AI Error: Failed to extract biometric identity from capture.");
+            setShowFaceVerify(false);
+        }
     };
 
     return (
