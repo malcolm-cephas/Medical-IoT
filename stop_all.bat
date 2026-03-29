@@ -33,6 +33,6 @@ taskkill /F /FI "WINDOWTITLE eq Log Monitor" /T 2>nul
 
 echo.
 echo ===================================================
-echo   ALL AI & BACKEND SERVICES STOPPED
+echo   ALL AI ^& BACKEND SERVICES STOPPED
 echo ===================================================
 pause

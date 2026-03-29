@@ -12,7 +12,7 @@ export const getAuthUrl = () => {
 
 export const getAnalyticsUrl = () => {
     const hostname = window.location.hostname;
-    const port = import.meta.env.VITE_ANALYTICS_PORT || '4242';
+    const port = import.meta.env.VITE_ANALYTICS_PORT || '4444';
     return `http://${hostname}:${port}`;
 };
 

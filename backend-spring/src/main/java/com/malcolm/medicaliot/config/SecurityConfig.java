@@ -55,6 +55,7 @@ public class SecurityConfig {
                 .headers(headers -> headers.frameOptions(frame -> frame.disable()))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll() 
+                        .requestMatchers("/api/sensor/**").permitAll()
                         .requestMatchers("/ws-vitals/**").permitAll()
                         .requestMatchers("/error").permitAll()
                         .anyRequest().authenticated())

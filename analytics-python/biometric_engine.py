@@ -1,87 +1,99 @@
 import cv2
 import numpy as np
 import base64
-import face_recognition
-from ultralytics import YOLO
-import torch
+import io
+import os
+import requests
+from PIL import Image
 
 class BiometricEngine:
     """
-    Advanced Face Recognition Engine:
-    - Detection: YOLO (Ultralytics) for high-accuracy face localized bounding boxes.
-    - Recognition: face_recognition (dlib) for 128-d Identity Embedding.
+    Modern AI-Powered Biometric Engine using OpenCV Deep Learning.
+    - Simplified and robust fallback for model loading.
     """
 
     def __init__(self):
-        # We use a YOLOv8-face model or standard YOLOv8n if face-specific isn't available
-        # The first run will download 'yolov8n.pt' (~6MB)
+        self.detector = None
+        self.recognizer = None
+        self._ensure_onnx_models()
+
+    def _ensure_onnx_models(self):
+        """ Downloads the necessary ONNX weights with integrity checks. """
+        
+        # Correct Raw URLs for OpenCV Zoo Models
+        models = {
+            "face_detection_yunet_2023mar.onnx": "https://raw.githubusercontent.com/opencv/opencv_zoo/master/models/face_detection_yunet/face_detection_yunet_2023mar.onnx",
+            "face_recognition_sface_2021dec.onnx": "https://raw.githubusercontent.com/opencv/opencv_zoo/master/models/face_recognition_sface/face_recognition_sface_2021dec.onnx"
+        }
+        
+        for name, url in models.items():
+            # If missing or truncated (< 100KB)
+            if not os.path.exists(name) or os.path.getsize(name) < 100000:
+                print(f"BIOMETRIC_LOG: Downloading {name} model from {url}...")
+                try:
+                    r = requests.get(url, allow_redirects=True, stream=True)
+                    r.raise_for_status()
+                    with open(name, 'wb') as f:
+                        for chunk in r.iter_content(chunk_size=8192):
+                            f.write(chunk)
+                    print(f"BIOMETRIC_LOG: {name} downloaded successfully. Size: {os.path.getsize(name)} bytes.")
+                except Exception as e:
+                    print(f"BIOMETRIC_LOG: CRITICAL - Download failed for {name}: {e}")
+
         try:
-            self.detector = YOLO('yolov8n.pt') 
-            print("BIOMETRIC_LOG: YOLO Detector Loaded Successfully.")
+             self.detector = cv2.FaceDetectorYN.create("face_detection_yunet_2023mar.onnx", "", (320, 320), 0.9, 0.3, 5000)
+             self.recognizer = cv2.FaceRecognizerSF.create("face_recognition_sface_2021dec.onnx", "")
+             print("BIOMETRIC_LOG: AI Models initialized.")
         except Exception as e:
-            print(f"BIOMETRIC_LOG: Warning, YOLO load failed: {e}. Falling back to HOG.")
-            self.detector = None
+             print(f"BIOMETRIC_LOG: ONNX Load Error. This occurs if models are corrupted: {e}")
 
     def extract_descriptor(self, image_base64: str):
         """
-        Takes a base64 image, uses YOLO to find the face, crops it, 
-        and extracts 128-d descriptor.
+        Extracts 128-d ArcFace identity mappings.
         """
         try:
-            # Decode image
-            img_data = base64.b64decode(image_base64.split(",")[-1])
-            img_array = np.frombuffer(img_data, np.uint8)
-            img = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
-            
-            if img is None:
-                return {"error": "Invalid image format received"}
+            if not self.detector: self._ensure_onnx_models()
 
-            rgb_img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            # 1. Decode and Normalize
+            img_data = base64.b64decode(image_base64.split(",")[-1])
+            img_pil = Image.open(io.BytesIO(img_data)).convert('RGB')
+            img_bgr = cv2.cvtColor(np.array(img_pil), cv2.COLOR_RGB2BGR)
             
-            # 1. Detection Phase (YOLO)
-            face_locations = []
-            if self.detector:
-                results = self.detector(img, verbose=False)
-                # Parse YOLO results for 'person' or 'face' (YOLOv8 detects persons by default)
-                # To be precise, one would use yolov8n-face.pt but we use person-crop for stability
-                for r in results:
-                    boxes = r.boxes.xyxy.cpu().numpy()
-                    for box in boxes:
-                        # Convert YOLO box (x1, y1, x2, y2) to face_recognition (top, right, bottom, left)
-                        x1, y1, x2, y2 = map(int, box)
-                        face_locations.append((y1, x2, y2, x1))
+            # Detect faces
+            h, w, _ = img_bgr.shape
+            self.detector.setInputSize((w, h))
+            ret, faces = self.detector.detect(img_bgr)
             
-            # 2. Recognition Phase (dlib)
-            # If YOLO didn't find specific faces, fall back to dlib's internal HOG detector
-            encodings = face_recognition.face_encodings(rgb_img, known_face_locations=face_locations if face_locations else None)
+            if faces is None or len(faces) == 0:
+                # If YuNet fails, we'll try one last time with a slightly lower confidence
+                self.detector.setScoreThreshold(0.6)
+                ret, faces = self.detector.detect(img_bgr)
+                if faces is None or len(faces) == 0:
+                    return {"error": "No face found in frame. Ensure your full face is visible and well-lit."}
             
-            if not encodings:
-                return {"error": "No face detected in the capture. Ensure good lighting."}
-            
-            return {"descriptor": encodings[0].tolist(), "status": "success"}
+            # Aligned face
+            aligned_face = self.recognizer.alignCrop(img_bgr, faces[0])
+            # Extract
+            feature = self.recognizer.feature(aligned_face)
+            return {"descriptor": feature[0].tolist(), "status": "success"}
 
         except Exception as e:
-            print(f"BIOMETRIC_LOG: Extraction Critical Error: {e}")
-            return {"error": f"Processing Failed: {str(e)}"}
+            print(f"BIOMETRIC_LOG: Identity extraction failed: {e}")
+            return {"error": f"AI Engine Failure: {str(e)}"}
 
-    def verify(self, stored_descriptor: list, captured_image_base64: str, tolerance: float = 0.55):
-        """
-        Compares Identity: Euclidean distance between 128-vectors.
-        """
+    def verify(self, stored_descriptor: list, captured_image_base64: str, tolerance: float = 0.363):
+        """ SFace Cosine Similarity Match """
         result = self.extract_descriptor(captured_image_base64)
-        if "error" in result:
-            return result
+        if "error" in result: return result
         
-        captured_descriptor = result["descriptor"]
-        distance = np.linalg.norm(np.array(stored_descriptor) - np.array(captured_descriptor))
+        featStored = np.array([stored_descriptor], dtype=np.float32)
+        featNew = np.array([result["descriptor"]], dtype=np.float32)
+        score = self.recognizer.match(featStored, featNew, cv2.FR_COSINE)
         
-        # Identity match threshold (0.6 is common, 0.5 is stricter)
-        is_match = distance < tolerance
-        
+        # SFace threshold (standard) is ~0.363
         return {
-            "valid": bool(is_match),
-            "distance": float(distance),
-            "confidence": float(1.0 - distance),
+            "valid": bool(score > tolerance),
+            "similarity": float(score),
             "status": "success"
         }
 
