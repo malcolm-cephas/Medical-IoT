@@ -5,9 +5,7 @@ import com.malcolm.medicaliot.repository.PrescriptionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestTemplate;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -24,8 +22,6 @@ public class PrescriptionController {
     private final PrescriptionRepository prescriptionRepository;
     private final com.malcolm.medicaliot.service.FaceService faceService;
     private final com.malcolm.medicaliot.repository.SystemLogRepository logRepository;
-
-    private final RestTemplate restTemplate = new RestTemplate();
 
     /**
      * Endpoint to add a new prescription.

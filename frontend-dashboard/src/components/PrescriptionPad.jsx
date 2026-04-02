@@ -119,7 +119,7 @@ const PrescriptionPad = ({ doctorId, selectedPatientId, onClose }) => {
     };
 
     return (
-        <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
+        <div style={{ backgroundColor: 'var(--card-bg)', color: 'var(--text-primary)' }} className="p-6 rounded-lg shadow-2xl border border-gray-700">
             {/* Biometric Modal Overlay */}
             {showFaceVerify && (
                 <FaceVerification 
@@ -132,7 +132,7 @@ const PrescriptionPad = ({ doctorId, selectedPatientId, onClose }) => {
 
             {/* Header Section */}
             <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-bold text-indigo-700 flex items-center">
+                <h3 className="text-xl font-bold text-blue-400 flex items-center">
                     <span className="mr-2">💊</span> Prescription Pad
                 </h3>
                 {selectedPatientId && (
@@ -150,12 +150,13 @@ const PrescriptionPad = ({ doctorId, selectedPatientId, onClose }) => {
             ) : (
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {/* Diagnosis Input Field */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Diagnosis</label>
+                    <div className="form-group">
+                        <label className="block text-sm font-medium text-gray-400 mb-1">Diagnosis</label>
                         <input
                             type="text"
                             required
-                            className="w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            style={{ backgroundColor: 'var(--input-bg)', color: 'var(--input-text)', borderColor: 'var(--input-border)' }}
+                            className="w-full border rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500"
                             placeholder="e.g. Acute Bronchitis"
                             value={diagnosis}
                             onChange={(e) => setDiagnosis(e.target.value)}
@@ -163,12 +164,13 @@ const PrescriptionPad = ({ doctorId, selectedPatientId, onClose }) => {
                     </div>
 
                     {/* Medication (Rx) Textarea */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Rx (Medication)</label>
+                    <div className="form-group">
+                        <label className="block text-sm font-medium text-gray-400 mb-1">Rx (Medication)</label>
                         <textarea
                             required
                             rows="3"
-                            className="w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm"
+                            style={{ backgroundColor: 'var(--input-bg)', color: 'var(--input-text)', borderColor: 'var(--input-border)' }}
+                            className="w-full border rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm"
                             placeholder="e.g. Amoxicillin 500mg - 1 tablet every 8 hours for 7 days"
                             value={medicine}
                             onChange={(e) => setMedicine(e.target.value)}
@@ -176,11 +178,12 @@ const PrescriptionPad = ({ doctorId, selectedPatientId, onClose }) => {
                     </div>
 
                     {/* Notes Textarea */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Notes / Advice</label>
+                    <div className="form-group">
+                        <label className="block text-sm font-medium text-gray-400 mb-1">Notes / Advice</label>
                         <textarea
                             rows="2"
-                            className="w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            style={{ backgroundColor: 'var(--input-bg)', color: 'var(--input-text)', borderColor: 'var(--input-border)' }}
+                            className="w-full border rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500"
                             placeholder="e.g. Drink plenty of fluids, rest for 3 days."
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}

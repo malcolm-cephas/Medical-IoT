@@ -15,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -40,16 +41,21 @@ public class FaceService {
             body.add("file", file.getResource());
 
             HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
-            ResponseEntity<Map> response = restTemplate.postForEntity(faceServiceUrl + "/extract_embedding", requestEntity, Map.class);
+            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                faceServiceUrl + "/extract_embedding", Objects.requireNonNull(HttpMethod.POST), requestEntity, 
+                new org.springframework.core.ParameterizedTypeReference<Map<String, Object>>() {});
 
-            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                String embedding = response.getBody().get("embedding").toString();
-                Optional<User> userOpt = userRepository.findByUsername(username);
-                if (userOpt.isPresent()) {
-                    User user = userOpt.get();
-                    user.setFaceEmbedding(embedding);
-                    userRepository.save(user);
-                    return true;
+            if (response.getStatusCode().is2xxSuccessful()) {
+                Map<String, Object> responseBody = Objects.requireNonNull(response.getBody());
+                if (responseBody.get("embedding") != null) {
+                    String embedding = Objects.requireNonNull(responseBody.get("embedding")).toString();
+                    Optional<User> userOpt = userRepository.findByUsername(username);
+                    if (userOpt.isPresent()) {
+                        User user = userOpt.get();
+                        user.setFaceEmbedding(embedding);
+                        userRepository.save(user);
+                        return true;
+                    }
                 }
             }
         } catch (Exception e) {
@@ -76,15 +82,19 @@ public class FaceService {
             body.add("target_embedding", userOpt.get().getFaceEmbedding());
 
             HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
-            ResponseEntity<Map> response = restTemplate.postForEntity(faceServiceUrl + "/verify_face", requestEntity, Map.class);
+            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                faceServiceUrl + "/verify_face", Objects.requireNonNull(HttpMethod.POST), requestEntity, 
+                new org.springframework.core.ParameterizedTypeReference<Map<String, Object>>() {});
 
-            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                Boolean match = (Boolean) response.getBody().get("match");
-                if (Boolean.TRUE.equals(match)) {
-                    // Create a new successful verification session
-                    FaceVerificationSession session = new FaceVerificationSession(username, LocalDateTime.now(), true);
-                    sessionRepository.save(session);
-                    return true;
+            if (response.getStatusCode().is2xxSuccessful()) {
+                Map<String, Object> responseBody = Objects.requireNonNull(response.getBody());
+                if (responseBody.get("match") != null) {
+                    Boolean match = (Boolean) responseBody.get("match");
+                    if (Boolean.TRUE.equals(match)) {
+                        FaceVerificationSession session = new FaceVerificationSession(username, LocalDateTime.now(), true);
+                        sessionRepository.save(session);
+                        return true;
+                    }
                 }
             }
         } catch (Exception e) {

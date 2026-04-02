@@ -10,6 +10,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Service to interface with local IPFS node (Kubo) RPC API.
@@ -40,7 +41,7 @@ public class IPFSService {
     public String store(String data) {
         log.info("IPFS_TX: Uploading raw string data blob");
         byte[] bytes = (data != null) ? data.getBytes() : new byte[0];
-        ByteArrayResource resource = new ByteArrayResource(bytes) {
+        ByteArrayResource resource = new ByteArrayResource(Objects.requireNonNull(bytes)) {
             @Override
             public String getFilename() {
                 return "encrypted_vitals.json";
@@ -61,17 +62,19 @@ public class IPFSService {
 
             org.springframework.core.ParameterizedTypeReference<Map<String, Object>> typeRef = 
                 new org.springframework.core.ParameterizedTypeReference<Map<String, Object>>() {};
+            
             ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
                 IPFS_API_URL, 
-                HttpMethod.POST, 
+                Objects.requireNonNull(HttpMethod.POST), 
                 requestEntity, 
                 typeRef);
+            
             Map<String, Object> responseBody = response.getBody();
 
             if (response.getStatusCode().is2xxSuccessful() && responseBody != null) {
                 String cid = (String) responseBody.get("Hash");
                 log.info("IPFS_RX: Successfully indexed {}. CID: {}", filename, cid);
-                return cid;
+                return cid != null ? cid : "";
             } else {
                 throw new RuntimeException("IPFS Node rejection: " + response.getStatusCode());
             }
@@ -85,10 +88,11 @@ public class IPFSService {
         String url = IPFS_GET_URL + cid;
         try {
             ResponseEntity<byte[]> response = restTemplate.getForEntity(url, byte[].class);
-            if (response.getBody() == null) {
+            byte[] body = response.getBody();
+            if (body == null) {
                 throw new RuntimeException("Empty response from IPFS for CID: " + cid);
             }
-            return response;
+            return ResponseEntity.ok(body);
         } catch (Exception e) {
             log.error("IPFS_ERR: Failed to fetch CID {}: {}", cid, e.getMessage());
             throw new RuntimeException("Gateway retrieval failed for index: " + cid);

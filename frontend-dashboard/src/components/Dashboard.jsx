@@ -589,8 +589,8 @@ const Dashboard = ({ user, theme, toggleTheme, forceDetail }) => {
         {showPrescriptionPad && (
           <div style={{
             position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
-            backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            zIndex: 1000
+            backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 1000, backdropFilter: 'blur(8px)'
           }}>
             <div style={{ position: 'relative', width: '500px', maxWidth: '90%' }}>
               <button
