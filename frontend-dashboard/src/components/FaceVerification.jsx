@@ -82,7 +82,7 @@ const FaceVerification = ({ username, mode, onSuccess, onCancel }) => {
                         muted 
                         playsInline
                     />
-                    {isCaptureLoading && <div className="loading-spinner-overlay">Analyzing with YOLO AI...</div>}
+                    {isCaptureLoading && <div className="loading-spinner-overlay">Analyzing with Haar AI...</div>}
                 </div>
 
                 {/* Hidden canvas for frame extraction */}

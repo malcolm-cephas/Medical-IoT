@@ -5,7 +5,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -48,8 +47,7 @@ public class BiometricController {
     public ResponseEntity<?> verify(@RequestBody Map<String, Object> request) {
         try {
             String username = (String) request.get("username");
-            @SuppressWarnings("unchecked")
-            List<Double> descriptor = (List<Double>) request.get("descriptor");
+            String descriptor = (String) request.get("descriptor"); // Accept as string
 
             if (username == null || descriptor == null) {
                 return ResponseEntity.badRequest().body(Map.of("error", "Username and descriptor required"));

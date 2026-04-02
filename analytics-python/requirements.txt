@@ -6,14 +6,10 @@ scikit-learn
 requests
 pycryptodome
 cryptography
-opencv-python
+opencv-contrib-python
 matplotlib
 scikit-image
 scipy
 pydicom
-face-recognition
-dlib
 imutils
-ultralytics
-torch
-torchvision
+Pillow

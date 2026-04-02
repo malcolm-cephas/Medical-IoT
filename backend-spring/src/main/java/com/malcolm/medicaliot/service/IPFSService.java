@@ -39,7 +39,8 @@ public class IPFSService {
      */
     public String store(String data) {
         log.info("IPFS_TX: Uploading raw string data blob");
-        ByteArrayResource resource = new ByteArrayResource(data.getBytes()) {
+        byte[] bytes = (data != null) ? data.getBytes() : new byte[0];
+        ByteArrayResource resource = new ByteArrayResource(bytes) {
             @Override
             public String getFilename() {
                 return "encrypted_vitals.json";
@@ -58,8 +59,13 @@ public class IPFSService {
 
             HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
 
-            @SuppressWarnings("unchecked")
-        ResponseEntity<Map<String, Object>> response = restTemplate.postForEntity(IPFS_API_URL, requestEntity, (Class<Map<String, Object>>) (Class<?>) Map.class);
+            org.springframework.core.ParameterizedTypeReference<Map<String, Object>> typeRef = 
+                new org.springframework.core.ParameterizedTypeReference<Map<String, Object>>() {};
+            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                IPFS_API_URL, 
+                HttpMethod.POST, 
+                requestEntity, 
+                typeRef);
             Map<String, Object> responseBody = response.getBody();
 
             if (response.getStatusCode().is2xxSuccessful() && responseBody != null) {

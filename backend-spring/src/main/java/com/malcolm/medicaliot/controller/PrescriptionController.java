@@ -22,77 +22,54 @@ import java.util.Map;
 public class PrescriptionController {
 
     private final PrescriptionRepository prescriptionRepository;
-
-    @org.springframework.beans.factory.annotation.Autowired
-    private com.malcolm.medicaliot.service.TwoFactorService twoFactorService;
+    private final com.malcolm.medicaliot.service.FaceService faceService;
+    private final com.malcolm.medicaliot.repository.SystemLogRepository logRepository;
 
     private final RestTemplate restTemplate = new RestTemplate();
-    private final String AUTH_SERVER_URL = "http://localhost:9000/api/auth/biometric/verify";
 
     /**
      * Endpoint to add a new prescription.
-     * Includes support for 2FA via 6-digit code or Face-ID biometrics.
+     * Doctors MUST have a valid face-verification session (active within 5 minutes).
      */
     @PostMapping("/add")
     public ResponseEntity<?> addPrescription(
+            @RequestHeader(value = "X-User-Role", required = false) String role,
             @RequestHeader(value = "X-User-Id", required = false) String doctorUsername,
-            @RequestHeader(value = "X-2FA-Code", required = false) String tfaCode,
-            @RequestHeader(value = "X-Biometric-Data", required = false) String biometricDataJson,
             @RequestBody Prescription prescription) {
         
         if (prescription == null) {
             return ResponseEntity.badRequest().build();
         }
 
-        // Logic for Doctors: Require 2FA if doctorId is present
-        if (doctorUsername != null) {
-            boolean isVerified = false;
+        // Logic for Doctors: Require Biometric 2FA session for prescription creation
+        if ("DOCTOR".equalsIgnoreCase(role) || doctorUsername != null) {
+            boolean isVerified = faceService.isSessionValid(doctorUsername);
             
-            // 1. Check traditional 2FA (TOTP / Email Code)
-            if (tfaCode != null && !tfaCode.isEmpty()) {
-                if (twoFactorService.verifyCode(doctorUsername, tfaCode)) {
-                    isVerified = true;
-                }
-            }
-            
-            // 2. Check Biometric 2FA (if code fails or is missing)
-            if (!isVerified && biometricDataJson != null && !biometricDataJson.isEmpty()) {
-                try {
-                    // Convert biometric data string back to list of doubles
-                    String clean = biometricDataJson.replace("[", "").replace("]", "");
-                    String[] parts = clean.split(",");
-                    List<Double> descriptor = new java.util.ArrayList<>();
-                    for (String part : parts) descriptor.add(Double.parseDouble(part.trim()));
-                    
-                    // Delegate verification to the Dedicated Auth Server (Port 9000)
-                    Map<String, Object> verifyRequest = new HashMap<>();
-                    verifyRequest.put("username", doctorUsername);
-                    verifyRequest.put("descriptor", descriptor);
-                    
-                    ResponseEntity<Map<String, Object>> response = restTemplate.postForEntity(AUTH_SERVER_URL, verifyRequest, (Class<Map<String, Object>>) (Class<?>) Map.class);
-                    Map<String, Object> responseBody = response.getBody();
-                    if (response.getStatusCode().is2xxSuccessful() && responseBody != null) {
-                        Boolean isValid = (Boolean) responseBody.get("valid");
-                        if (Boolean.TRUE.equals(isValid)) {
-                            isVerified = true;
-                        }
-                    }
-                } catch (Exception e) {
-                    System.err.println("REMOTE_AUTH_ERROR: Biometric verification failed: " + e.getMessage());
-                }
-            }
-
             if (!isVerified) {
+                logRepository.save(new com.malcolm.medicaliot.model.SystemLog(
+                    doctorUsername, "PRESCRIPTION_CREATE_DENIED", 
+                    "Doctor failed biometric session check", "FAILURE"
+                ));
                 return ResponseEntity.status(403)
                         .body(Map.of(
-                            "error", "2FA Verification Required", 
-                            "message", "Please provide a valid 6-digit code or Face ID",
+                            "error", "Biometric 2FA Required", 
+                            "message", "Please perform Face ID verification before creating a prescription (session valid for 5 mins)",
                             "2fa_required", true
                         ));
             }
         }
         
-        return ResponseEntity.ok(prescriptionRepository.save(prescription));
+        Prescription saved = prescriptionRepository.save(prescription);
+        
+        // Audit log for successful creation
+        if (doctorUsername != null) {
+            logRepository.save(new com.malcolm.medicaliot.model.SystemLog(
+                doctorUsername, "PRESCRIPTION_CREATE", 
+                "Prescription created with biometric verification", "SUCCESS"
+            ));
+        }
+        
+        return ResponseEntity.ok(saved);
     }
 
     @GetMapping("/patient/{patientId}")

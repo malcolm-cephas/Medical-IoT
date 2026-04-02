@@ -48,6 +48,9 @@ public class User {
     private String wardName;
     private Integer wardNumber;
 
+    @Column(columnDefinition = "TEXT")
+    private String faceEmbedding;
+
     // Default constructor required by JPA
     public User() {
     }
@@ -63,7 +66,8 @@ public class User {
 
     public User(Long id, String username, String password, String role, String department, String attributes,
                 String fullName, int age, String gender, String address, String specialization, String clearanceLevel,
-                String referredBy, String reasonOfAdmission, LocalDateTime dateOfAdmission, String wardName, Integer wardNumber) {
+                String referredBy, String reasonOfAdmission, LocalDateTime dateOfAdmission, String wardName, Integer wardNumber,
+                String faceEmbedding) {
         this.id = id;
         this.username = username;
         this.password = password;
@@ -81,6 +85,7 @@ public class User {
         this.dateOfAdmission = dateOfAdmission;
         this.wardName = wardName;
         this.wardNumber = wardNumber;
+        this.faceEmbedding = faceEmbedding;
     }
 
     // --- Getters and Setters ---
@@ -219,5 +224,13 @@ public class User {
 
     public void setWardNumber(Integer wardNumber) {
         this.wardNumber = wardNumber;
+    }
+
+    public String getFaceEmbedding() {
+        return faceEmbedding;
+    }
+
+    public void setFaceEmbedding(String faceEmbedding) {
+        this.faceEmbedding = faceEmbedding;
     }
 }

@@ -97,3 +97,12 @@ models.txt
 # *.pem
 # *.key
 # keys/
+
+# Data Science and ML
+analytics-python/data/*.csv
+analytics-python/examples/beginner_projects/**/Dataset/
+analytics-python/examples/beginner_projects/**/images/
+analytics-python/examples/beginner_projects/**/*.yml
+analytics-python/examples/beginner_projects/**/*.pickle
+analytics-python/examples/beginner_projects/**/*.xls
+analytics-python/examples/beginner_projects/**/cascades/

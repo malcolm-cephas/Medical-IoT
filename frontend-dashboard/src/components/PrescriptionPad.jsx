@@ -34,76 +34,87 @@ const PrescriptionPad = ({ doctorId, selectedPatientId, onClose }) => {
      * Handles the form submission to create a new prescription.
      *
      * @param {Event} e - The submit event
-     * @param {Array} facialDescriptor - Optional facial descriptor for biometric 2FA
      */
-    const handleSubmit = async (e, facialDescriptor = null) => {
-        if (e) e.preventDefault(); // Prevent default HTML form submission behavior
+    const handleSubmit = async (e) => {
+        if (e) e.preventDefault();
 
-        // Validation: Ensure a patient is selected
         if (!selectedPatientId) {
             alert("Please select a patient first.");
             return;
         }
 
-        setLoading(true); // Start loading state
+        setLoading(true);
         try {
-            const descriptorToUse = facialDescriptor || biometricData;
-            
             // Make a POST request to the backend to save the prescription
             await axios.post(`${getBackendUrl()}/api/prescriptions/add`, {
-                doctorId: doctorId, // Pass doctor ID (User context)
-                patientId: selectedPatientId, // Pass selected patient ID
+                doctorId: doctorId,
+                patientId: selectedPatientId,
                 diagnosis,
                 medicine,
                 notes
             }, {
                 headers: {
                     'X-User-Id': doctorId,
-                    'X-Biometric-Data': descriptorToUse ? JSON.stringify(descriptorToUse) : ''
+                    'X-User-Role': 'DOCTOR' // Explicitly set role for 2FA trigger
                 }
             });
 
-            // If successful, show success message
             setSuccess(true);
             setShowFaceVerify(false);
 
-            // Reset form and close component after a short delay
             setTimeout(() => {
                 setSuccess(false);
                 setDiagnosis('');
                 setMedicine('');
                 setNotes('');
-                if (onClose) onClose(); // Trigger parent's close callback
+                if (onClose) onClose();
             }, 2000);
         } catch (error) {
-            console.error("Error creating prescription:", error);
+            console.error("Error creating prescription:", error.response || error);
             
-            // Handle 2FA Requirement
+            // Handle 2FA Requirement from Spring Boot
             if (error.response && error.response.status === 403 && error.response.data['2fa_required']) {
                 setShowFaceVerify(true);
             } else {
-                alert(error.response?.data?.error || "Failed to save prescription.");
+                alert(error.response?.data?.error || error.response?.data?.message || "Failed to save prescription.");
             }
         } finally {
-            setLoading(false); // Stop loading state regardless of success or failure
+            setLoading(false);
         }
     };
 
-    const handleFaceSuccess = async (imageData) => {
+    /**
+     * Called when FaceVerification component captures an image.
+     * Sends the image to Spring Boot to START a 5-minute authorized session.
+     */
+    const handleFaceSuccess = async (base64Image) => {
         try {
-            // Transform raw capture to 128-d vector via Python AI
-            const res = await axios.post(`${getAnalyticsUrl()}/biometric/extract`, {
-                image_base64: imageData
-            });
-            const descriptor = res.data.descriptor;
-            setBiometricData(descriptor);
+            setLoading(true);
             
-            // Retry submission with the AI-extracted descriptor
-            await handleSubmit(null, descriptor);
+            // Convert Base64 to Blob for Multipart upload
+            const response = await fetch(base64Image);
+            const blob = await response.blob();
+            
+            const formData = new FormData();
+            formData.append('username', doctorId);
+            formData.append('file', blob, 'face_capture.jpg');
+
+            // Send to Spring Boot FaceController (Not Python directly)
+            const res = await axios.post(`${getBackendUrl()}/api/face/verify`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+
+            if (res.data.verified) {
+                setShowFaceVerify(false);
+                // Retry the original submission - now the backend will see a valid session!
+                await handleSubmit(null);
+            }
         } catch (err) {
-            console.error("Verification extraction failed", err);
-            alert("AI Error: Failed to extract biometric identity from capture.");
+            console.error("Biometric Verification Error:", err.response || err);
+            alert("Verification Failed: " + (err.response?.data?.error || "Unknown Error"));
             setShowFaceVerify(false);
+        } finally {
+            setLoading(false);
         }
     };
 

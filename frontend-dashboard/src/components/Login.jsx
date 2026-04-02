@@ -60,7 +60,7 @@ const Login = ({ onLogin }) => {
 
             // Specific error handling for network issues
             if (err.code === "ERR_NETWORK") {
-                errorMessage = "Network Error. Ensure the backend is running at http://localhost:8080";
+                errorMessage = `Network Error. Ensure the auth server is running at ${getAuthUrl()}`;
             } else if (err.response) {
                 // Backend returned an error message
                 errorMessage = err.response.data?.message || JSON.stringify(err.response.data);

@@ -137,9 +137,9 @@ const Dashboard = ({ user, theme, toggleTheme, forceDetail }) => {
   // Check biometric enrollment status on mount (or when user changes)
   useEffect(() => {
     const checkBiometricStatus = async () => {
-        if (!user || !user.username) return;
+        if (!user || user.role !== 'doctor') return;
         try {
-            const response = await axios.get(`${getAuthUrl()}/api/auth/biometric/status/${user.username}`);
+            const response = await axios.get(`${getBackendUrl()}/api/face/enrollment-status/${user.username}`);
             setIsBiometricEnrolled(response.data.enrolled);
         } catch (error) {
             console.error("Failed to check biometric status", error);
@@ -359,38 +359,32 @@ const Dashboard = ({ user, theme, toggleTheme, forceDetail }) => {
     }
   };
 
-  const handleFaceEnroll = async (imageData) => {
-    console.log("DEBUG: handleFaceEnroll triggered with image data");
+  const handleFaceEnroll = async (base64Image) => {
     try {
-        // High-Precision extraction using Python + Ultralytics (Port 4242)
-        const extractUrl = `${getAnalyticsUrl()}/biometric/extract`;
-        console.log("DEBUG: Calling Python Extractor", extractUrl);
+        setLoading(true);
         
-        const extractRes = await axios.post(extractUrl, {
-            image_base64: imageData
-        });
+        // Convert Base64 to Blob for Multipart upload
+        const response = await fetch(base64Image);
+        const blob = await response.blob();
         
-        const descriptor = extractRes.data.descriptor;
-        console.log("DEBUG: Descriptor extracted from Python", descriptor);
+        const formData = new FormData();
+        formData.append('username', user.username);
+        formData.append('file', blob, 'enrollment.jpg');
 
-        // Security Persistence using Java Auth Server (Port 9000)
-        const saveUrl = `${getAuthUrl()}/api/auth/biometric/enroll`;
-        console.log("DEBUG: Saving to Auth Server", saveUrl);
-        
-        await axios.post(saveUrl, {
-            username: user.username,
-            descriptor: JSON.stringify(descriptor),
-            image: imageData // Port 9000 will now store this in MySQL as a BLOB
+        // Send to Spring Boot FaceController (Handles registration + storage)
+        const res = await axios.post(`${getBackendUrl()}/api/face/register`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
         });
-        
-        console.log("DEBUG: Enrollment successful");
-        alert("Face ID Enrolled Successfully via Python AI!");
+
+        alert("Face ID Enrolled Successfully! Biometric data is now secured.");
         setIsBiometricEnrolled(true);
         setShowFaceEnroll(false);
     } catch (err) {
-        console.error("DEBUG: Enrollment failed", err);
-        const errorMsg = err.response?.data?.detail || err.response?.data?.error || err.message;
-        alert("Biometric Error (Python): " + errorMsg);
+        console.error("Enrollment failed", err.response || err);
+        const errorMsg = err.response?.data?.error || err.message;
+        alert("Enrollment Error: " + errorMsg);
+    } finally {
+        setLoading(false);
     }
   };
 

@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+
 
 /**
  * Service to handle biometric logic in the dedicated Auth Server.
@@ -53,45 +53,34 @@ public class BiometricService {
                 .orElse(false);
     }
 
-    public boolean verify(String username, List<Double> providedDescriptor) {
-        // We'll keep the current logic but add a hook for Python-based verification if needed.
-        // Actually, the user wants the face recognition IN PYTHON.
-        // Let's implement the cross-service call.
-        
+    public boolean verify(String username, String providedDescriptor) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found in Auth DB: " + username));
 
-        String storedDescriptorJson = user.getFaceDescriptor();
-        if (storedDescriptorJson == null) return false;
+        String storedDescriptor = user.getFaceDescriptor();
+        if (storedDescriptor == null) return false;
 
         try {
-            // Traditional Java comparison as backup
-            String clean = storedDescriptorJson.trim().replace("[", "").replace("]", "");
-            if (clean.isEmpty()) return false;
+            // Call Python Analytics Service (Port 4242) for LBPH comparison
+            String analyticsUrl = "http://localhost:4242/biometric/verify";
+            org.springframework.web.client.RestTemplate restTemplate = new org.springframework.web.client.RestTemplate();
             
-            String[] parts = clean.split(",");
-            List<Double> storedDescriptor = new java.util.ArrayList<>();
-            for (String p : parts) storedDescriptor.add(Double.parseDouble(p.trim()));
+            java.util.Map<String, Object> request = new java.util.HashMap<>();
+            request.put("stored_descriptor_b64", storedDescriptor);
+            request.put("captured_b64", providedDescriptor);
 
-            // Call Python Analytics Service for high-precision comparison (YOLO + dlib) if needed
-            try {
-                // If we're verifying with a provided descriptor (from frontend), 
-                // the frontend has already done the heavy work via the Python bridge.
-                
-                double sumOfSquares = 0;
-                for (int i = 0; i < storedDescriptor.size(); i++) {
-                    double diff = storedDescriptor.get(i) - providedDescriptor.get(i);
-                    sumOfSquares += diff * diff;
-                }
-                double distance = Math.sqrt(sumOfSquares);
-                System.out.println("AUTH_LOG: Hybrid AI verification. Distance: " + distance);
-                return distance < 0.6;
-            } catch (Exception e) {
-                System.err.println("AUTH_LOG: Python bridge failed, using Java fallback.");
-                return false;
+            @SuppressWarnings("rawtypes")
+            org.springframework.http.ResponseEntity<java.util.Map> response = 
+                restTemplate.postForEntity(analyticsUrl, request, java.util.Map.class);
+            
+            java.util.Map responseBody = response.getBody();
+            if (response.getStatusCode().is2xxSuccessful() && responseBody != null) {
+                Boolean isValid = (Boolean) responseBody.get("valid");
+                return Boolean.TRUE.equals(isValid);
             }
+            return false;
         } catch (Exception e) {
-            System.err.println("AUTH_LOG: Critical Verification failure: " + e.getMessage());
+            System.err.println("AUTH_LOG: Python verification failed: " + e.getMessage());
             return false;
         }
     }
