@@ -31,14 +31,17 @@ start "AI MCP Client (Port 8083)" powershell -NoExit -Command "cd 'ai/mcp-client
 echo [5/6] Starting Spring Backend (Port 8080)...
 start "Spring Backend (Port 8080)" powershell -NoExit -Command "cd 'backend-spring'; mvn spring-boot:run 2>&1 | Tee-Object -FilePath '..\Logs\backend.log'"
 
-echo [6/6] Starting React Frontend (Port 5173)...
+echo [6/7] Starting React Frontend (Port 5173)...
 start "React Frontend (Port 5173)" powershell -NoExit -Command "cd 'frontend-dashboard'; npm install; npm run dev 2>&1 | Tee-Object -FilePath '..\Logs\frontend.log'"
+
+echo [7/7] Starting AI Face Biometrics Service (Port 5050)...
+start "AI Face Service (Port 5050)" powershell -NoExit -Command "cd 'ai-face-service'; python -m pip install -r requirements.txt; python app.py 2>&1 | Tee-Object -FilePath '..\Logs\face-ai.log'"
 
 :: Start Log Monitor
 start "Log Monitor" powershell -NoExit -ExecutionPolicy Bypass -File "monitor_logs.ps1"
 
 echo ===========================================
-echo All services launching...
+echo All 7 medical services launching...
 echo Check Logs folder for detailed output.
 echo ===========================================
 pause

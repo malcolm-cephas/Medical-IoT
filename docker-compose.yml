@@ -9,6 +9,7 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/medical_iot?createDatabaseIfNotExist=true
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=root
+      - FACE_SERVICE_URL=http://face-ai:5050
     depends_on:
       - mysql
     networks:
@@ -29,6 +30,13 @@ services:
     build: ./analytics-python
     ports:
       - "4242:4242"
+    networks:
+      - medic-net
+
+  face-ai:
+    build: ./ai-face-service
+    ports:
+      - "5050:5050"
     networks:
       - medic-net
 

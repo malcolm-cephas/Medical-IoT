@@ -29,6 +29,7 @@ taskkill /F /FI "WINDOWTITLE eq AI MCP Server (Port 9090)" /T 2>nul
 taskkill /F /FI "WINDOWTITLE eq AI MCP Client (Port 8083)" /T 2>nul
 taskkill /F /FI "WINDOWTITLE eq Spring Backend (Port 8080)" /T 2>nul
 taskkill /F /FI "WINDOWTITLE eq React Frontend (Port 5173)" /T 2>nul
+taskkill /F /FI "WINDOWTITLE eq AI Face Service (Port 5050)" /T 2>nul
 taskkill /F /FI "WINDOWTITLE eq Log Monitor" /T 2>nul
 
 echo.
