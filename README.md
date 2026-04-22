@@ -808,6 +808,7 @@ Our Medical IoT system transmits sensitive patient medical images from local hos
 ---
 
 ### Where It Fits in the System Flow
+
 ```
 Patient scan captured at local clinic
         ↓
@@ -823,8 +824,8 @@ Watermarked image delivered to doctor (looks identical)
         ↓
 If image is found leaked anywhere:
 Admin uploads to /api/watermark/decode → identifies exactly whose copy was leaked
-```
 
+```
 ---
 
 ### How It Works (Technical)
