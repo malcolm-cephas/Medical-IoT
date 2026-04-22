@@ -799,12 +799,11 @@ This is an academic project for demonstration purposes. All rights reserved. See
 ### Why We Need This in Our Framework
 
 Our Medical IoT system transmits sensitive patient medical images from local hospitals to remote specialist doctors over the internet. The existing system uses:
-- **ABE Encryption** — controls WHO can access the image (access control)
+- **ECDH Encryption** — secures medical image transfer during transmission
+- **ABE Encryption** — controls fine-grained access to patient vital signs data
 - **Blockchain logging** — logs who accessed what
 
-**The Gap:** ABE secures the door. But once a doctor legitimately downloads the image, ABE's job is over. If that doctor leaks the image — shares it on WhatsApp, emails it, sells it — there is NO way to prove who leaked it. The system logs only show "doctor accessed file" which is normal behaviour.
-
-**Watermarking fills this gap** — it travels WITH the image after download.
+**The Gap:** ECDH secures the image during transmission. But once a doctor legitimately downloads the image, ECDH's job is over. If that doctor leaks the image — shares it on WhatsApp, emails it, sells it — there is NO way to prove who leaked it. Blockchain logs only show "doctor accessed file" which is normal behaviour.
 
 ---
 
