@@ -790,6 +790,104 @@ This is an academic project for demonstration purposes. All rights reserved. See
 - **[Doctor-Patient-API](https://github.com/MarcusFranklin-GIT/doctor-patient-api)** - Original NestJS repository (adapted for this project)
 
 ---
+## Traceable Watermark Feature
+
+**Inspired by:** "Building an Invisible Shield to Enable Traceable Privacy Protection for Medical Images in Telemedicine" — Wenying Wen et al., IEEE TCSVT 2026
+
+---
+
+### Why We Need This in Our Framework
+
+Our Medical IoT system transmits sensitive patient medical images from local hospitals to remote specialist doctors over the internet. The existing system uses:
+- **ECDH Encryption** — secures medical image transfer during transmission
+- **ABE Encryption** — controls fine-grained access to patient vital signs data
+- **Blockchain logging** — logs who accessed what
+
+**The Gap:** ECDH secures the image during transmission. But once a doctor legitimately downloads the image, ECDH's job is over. If that doctor leaks the image — shares it on WhatsApp, emails it, sells it — there is NO way to prove who leaked it. Blockchain logs only show "doctor accessed file" which is normal behaviour.
+
+---
+
+### Where It Fits in the System Flow
+Patient scan captured at local clinic
+↓
+Uploaded to IPFS (decentralised storage)
+↓
+Doctor requests image via our platform
+↓
+Backend fetches from IPFS
+↓
+★ WatermarkService embeds doctor's 64-bit ID invisibly  ← THIS IS THE NEW STEP
+↓
+Watermarked image delivered to doctor (looks identical)
+↓
+If image is found leaked anywhere:
+Admin uploads to /api/watermark/decode → identifies exactly whose copy was leaked
+
+---
+
+### How It Works (Technical)
+
+1. Doctor's username is converted into a stable **64-bit binary fingerprint**
+   - Example: "doctor123" → `0000000000000000010100000110111...` (64 bits)
+
+2. These 64 bits are embedded into **specific pixels spread evenly across the image**
+   - Only the **Least Significant Bit (LSB)** of the blue channel is changed
+   - A change from pixel value 200 → 201 is **completely invisible to the human eye**
+   - This is called **LSB Steganography**
+
+3. The image is returned as PNG (lossless) to preserve exact pixel values
+
+4. If leaked — admin uploads the suspicious image to `/api/watermark/decode`
+   - System reads the LSB of the same pixel positions
+   - Reconstructs the 64-bit fingerprint
+   - Matches it to the doctor's ID → **source identified**
+
+---
+
+### New API Endpoints
+
+| Method | URL | Purpose |
+|--------|-----|---------|
+| GET | `/api/watermark/health` | Check feature is active |
+| POST | `/api/watermark/embed` | Embed doctor ID invisibly into image |
+| POST | `/api/watermark/verify` | Confirm which doctor's copy this is |
+| POST | `/api/watermark/decode` | Extract hidden 64-bit fingerprint |
+
+---
+
+### Postman Demo Results
+
+**Test 1 — Feature Active**
+- `GET /api/watermark/health` → `"status": "ACTIVE"` ✅
+
+**Test 2 — Embed (Invisibility)**
+- `POST /api/watermark/embed` with medical image + `doctorId=doctor123`
+- Returns watermarked image — visually identical to original ✅
+
+**Test 3 — Verify Correct Doctor (Traceability)**
+- `POST /api/watermark/verify` with watermarked image + `doctorId=doctor123`
+- Returns `"match": true` ✅
+
+**Test 4 — Verify Wrong Doctor (Security)**
+- `POST /api/watermark/verify` with same image + `doctorId=doctor456`
+- Returns `"match": false` ✅
+
+**Test 5 — Decode Fingerprint**
+- `POST /api/watermark/decode` with watermarked image
+- Returns `"extracted_bits": "0000000000000000010100000110111..."` (64-bit fingerprint) ✅
+
+---
+
+### Difference from Base Paper
+
+| Base Paper | Our Implementation |
+|---|---|
+| Deep learning neural network encoder | LSB pixel manipulation |
+| Trained on medical datasets (GPU required) | Works on any image, no training needed |
+| Python/PyTorch | Java/Spring Boot |
+| Research prototype | Integrated into live Medical IoT backend |
+
+> Our implementation is inspired by the **concept** of receiver identity embedding for traceability — not a copy of the paper's neural network approach.
 
 ## 📄 License
 

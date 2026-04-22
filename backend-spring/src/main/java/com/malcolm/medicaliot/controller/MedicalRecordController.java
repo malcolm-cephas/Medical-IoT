@@ -1,7 +1,13 @@
 package com.malcolm.medicaliot.controller;
 
+//new change
+import com.malcolm.medicaliot.service.WatermarkService;
+//
 import com.malcolm.medicaliot.model.MedicalRecord;
 import com.malcolm.medicaliot.service.MedicalRecordService;
+//new change
+import jakarta.servlet.http.HttpServletRequest;
+//
 import com.malcolm.medicaliot.service.IPFSService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +18,8 @@ import java.util.List;
 
 /**
  * Controller for Medical Records.
- * Manages patient files stored securely on IPFS with metadata in MySQL database.
+ * Manages patient files stored securely on IPFS with metadata in MySQL
+ * database.
  */
 @RestController
 @RequestMapping("/api/medical-records")
@@ -26,6 +33,11 @@ public class MedicalRecordController {
     @Autowired
     private IPFSService ipfsService;
 
+    // new change
+    @Autowired
+    private WatermarkService watermarkService;
+    // new change end
+
     /**
      * Upload a clinical record to IPFS. Returns the CID and metadata.
      */
@@ -34,7 +46,7 @@ public class MedicalRecordController {
             @RequestParam("patientId") String patientId,
             @RequestParam("description") String description,
             @RequestParam("file") MultipartFile file) {
-        
+
         try {
             MedicalRecord savedRecord = recordService.processAndStoreRecord(patientId, description, file);
             return ResponseEntity.status(HttpStatus.CREATED).body(savedRecord);
@@ -54,19 +66,33 @@ public class MedicalRecordController {
 
     /**
      * Stream the raw file back from IPFS via its CID hash.
-     * This endpoint hides the local gateway URL from the client frontend for security.
+     * This endpoint hides the local gateway URL from the client frontend for
+     * security.
      */
     @GetMapping("/stream/{cid}")
-    public ResponseEntity<byte[]> streamFromIpfs(@PathVariable String cid) {
+    // public ResponseEntity<byte[]> streamFromIpfs(@PathVariable String cid) {
+    // new change
+    public ResponseEntity<byte[]> streamFromIpfs(
+            @PathVariable String cid,
+            HttpServletRequest request) { // till here
         try {
             ResponseEntity<byte[]> response = ipfsService.downloadFromIpfs(cid);
-            
+
             // Set headers based on original or default download strategy
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(response.getHeaders().getContentType());
             headers.setCacheControl(CacheControl.noCache().getHeaderValue());
-            
-            return new ResponseEntity<>(response.getBody(), headers, HttpStatus.OK);
+
+            // return new ResponseEntity<>(response.getBody(), headers, HttpStatus.OK);
+            // new change
+            String doctorId = request.getHeader("X-User-Id");
+            byte[] finalImage = (doctorId != null && response.getBody() != null)
+                    ? watermarkService.embedWatermark(response.getBody(), doctorId)
+                    : response.getBody();
+            // ── END WATERMARK FEATURE ─────────────────────────────────────────────
+
+            return new ResponseEntity<>(finalImage, headers, HttpStatus.OK);
+            // till here
         } catch (Exception e) {
             log.error("Error retrieving CID {} from IPFS decentralised storage.", cid);
             return ResponseEntity.notFound().build();
