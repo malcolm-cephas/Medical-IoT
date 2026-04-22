@@ -808,20 +808,22 @@ Our Medical IoT system transmits sensitive patient medical images from local hos
 ---
 
 ### Where It Fits in the System Flow
+```
 Patient scan captured at local clinic
-↓
+        ↓
 Uploaded to IPFS (decentralised storage)
-↓
+        ↓
 Doctor requests image via our platform
-↓
+        ↓
 Backend fetches from IPFS
-↓
+        ↓
 ★ WatermarkService embeds doctor's 64-bit ID invisibly  ← THIS IS THE NEW STEP
-↓
+        ↓
 Watermarked image delivered to doctor (looks identical)
-↓
+        ↓
 If image is found leaked anywhere:
 Admin uploads to /api/watermark/decode → identifies exactly whose copy was leaked
+```
 
 ---
 
