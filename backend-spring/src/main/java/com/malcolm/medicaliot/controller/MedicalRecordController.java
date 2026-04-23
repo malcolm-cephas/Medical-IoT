@@ -15,10 +15,11 @@ import java.util.List;
 /**
  * Controller for Medical Records.
  * Manages patient files stored securely on IPFS with metadata in MySQL database.
+ * Includes automated invisible watermarking for traceability.
  */
 @RestController
 @RequestMapping("/api/medical-records")
-@CrossOrigin(origins = "*") // Allows and prevents CORS blocks for front-end integration
+@CrossOrigin(origins = "*")
 @Slf4j
 public class MedicalRecordController {
 
@@ -39,7 +40,7 @@ public class MedicalRecordController {
             @RequestParam("patientId") String patientId,
             @RequestParam("description") String description,
             @RequestParam("file") MultipartFile file) {
-        
+
         try {
             MedicalRecord savedRecord = recordService.processAndStoreRecord(patientId, description, file);
             return ResponseEntity.status(HttpStatus.CREATED).body(savedRecord);
@@ -59,7 +60,7 @@ public class MedicalRecordController {
 
     /**
      * Stream the raw file back from IPFS via its CID hash.
-     * This endpoint hides the local gateway URL from the client frontend for security.
+     * Automatically embeds an invisible watermark of the requesting doctor's ID for traceability.
      */
     @GetMapping("/stream/{cid}")
     public ResponseEntity<byte[]> streamFromIpfs(@PathVariable String cid, HttpServletRequest request) {
@@ -67,7 +68,8 @@ public class MedicalRecordController {
             ResponseEntity<byte[]> response = ipfsService.downloadFromIpfs(cid);
             byte[] imageBytes = response.getBody();
 
-            // Watermark embedding logic
+            // ── WATERMARK FEATURE ──
+            // If the requester has an X-User-Id, we embed it invisibly into the blue channel LSB.
             String doctorId = request.getHeader("X-User-Id");
             if (doctorId != null && !doctorId.isEmpty() && imageBytes != null) {
                 try {
@@ -75,10 +77,10 @@ public class MedicalRecordController {
                     log.info("Invisible watermark embedded for user: {}", doctorId);
                 } catch (Exception e) {
                     log.error("Watermark embedding failed: {}", e.getMessage());
+                    // Fallback: return un-watermarked image if embedding fails
                 }
             }
             
-            // Set headers based on original or default download strategy
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(response.getHeaders().getContentType());
             headers.setCacheControl(CacheControl.noCache().getHeaderValue());
