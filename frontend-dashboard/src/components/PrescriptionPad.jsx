@@ -111,15 +111,33 @@ const PrescriptionPad = ({ doctorId, selectedPatientId, onClose }) => {
             }
         } catch (err) {
             console.error("Biometric Verification Error:", err.response || err);
-            alert("Verification Failed: " + (err.response?.data?.error || "Unknown Error"));
+            // Removed alert as requested. Silently close modal on failure.
             setShowFaceVerify(false);
         } finally {
             setLoading(false);
         }
     };
 
+    // Formatter for display names (e.g. doctor_micheal -> Micheal)
+    const formatName = (name) => {
+        if (!name) return "";
+        return name.toString().split('_').map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1)
+        ).join(' ').replace('Doctor ', ''); // Remove 'Doctor' if it's already in the username
+    };
+
     return (
-        <div style={{ backgroundColor: 'var(--card-bg)', color: 'var(--text-primary)' }} className="p-6 rounded-lg shadow-2xl border border-gray-700">
+        <div className="prescription-pad card fade-in" style={{ 
+            maxWidth: '500px', 
+            maxHeight: '85vh',
+            overflowY: 'auto',
+            margin: '0 auto', 
+            padding: '1.5rem', 
+            position: 'relative',
+            background: 'var(--card-bg)',
+            border: '1px solid var(--card-border)',
+            boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
+        }}>
             {/* Biometric Modal Overlay */}
             {showFaceVerify && (
                 <FaceVerification 
@@ -130,77 +148,180 @@ const PrescriptionPad = ({ doctorId, selectedPatientId, onClose }) => {
                 />
             )}
 
-            {/* Header Section */}
-            <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-bold text-blue-400 flex items-center">
-                    <span className="mr-2">💊</span> Prescription Pad
-                </h3>
-                {selectedPatientId && (
-                    <span className="text-sm bg-blue-100 text-blue-800 py-1 px-2 rounded-full">
-                        Patient ID: {selectedPatientId}
-                    </span>
-                )}
+            {/* Professional Medical Header */}
+            <div className="prescription-header" style={{ 
+                borderBottom: '2px solid var(--accent-color)', 
+                paddingBottom: '0.75rem', 
+                marginBottom: '1rem',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start'
+            }}>
+                <div>
+                    <h2 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--accent-color)', letterSpacing: '1px' }}>
+                        🏥 MEDISECURE INSTITUTE
+                    </h2>
+                    <p style={{ margin: '0.1rem 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                        Electronic Prescription Service
+                    </p>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontWeight: 'bold', fontSize: '0.85rem' }}>DR. {formatName(doctorId).toUpperCase()}</div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Lic: MED-{doctorId.toString().substring(0,4).toUpperCase()}</div>
+                </div>
             </div>
 
-            {/* Conditional Rendering: Show Success Message or Form */}
+            {/* Patient Context Bar */}
+            <div style={{ 
+                background: 'rgba(56, 189, 248, 0.05)', 
+                padding: '0.5rem 0.75rem', 
+                borderRadius: '8px', 
+                marginBottom: '1rem',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                border: '1px dashed var(--accent-color)'
+            }}>
+                <span style={{ fontSize: '0.85rem', fontWeight: '500' }}>Patient: <span style={{ color: 'var(--accent-color)' }}>{selectedPatientId}</span></span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{new Date().toLocaleDateString()}</span>
+            </div>
+
             {success ? (
-                <div className="bg-green-100 text-green-700 p-4 rounded text-center">
-                    ✅ Prescription Sent Successfully!
+                <div style={{ 
+                    padding: '2rem 1rem', 
+                    textAlign: 'center', 
+                    background: 'rgba(16, 185, 129, 0.1)', 
+                    borderRadius: '12px',
+                    border: '1px solid var(--success-color)'
+                }}>
+                    <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>✅</div>
+                    <h3 style={{ color: 'var(--success-color)', margin: 0 }}>Prescription Issued</h3>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '0.25rem' }}>Encrypted & stored on IPFS.</p>
                 </div>
             ) : (
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    {/* Diagnosis Input Field */}
-                    <div className="form-group">
-                        <label className="block text-sm font-medium text-gray-400 mb-1">Diagnosis</label>
+                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    
+                    <div className="input-group">
+                        <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-secondary)', marginBottom: '0.2rem', textTransform: 'uppercase' }}>
+                            Clinical Diagnosis
+                        </label>
                         <input
                             type="text"
                             required
-                            style={{ backgroundColor: 'var(--input-bg)', color: 'var(--input-text)', borderColor: 'var(--input-border)' }}
-                            className="w-full border rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500"
-                            placeholder="e.g. Acute Bronchitis"
+                            style={{ 
+                                width: '100%', 
+                                padding: '0.6rem', 
+                                background: 'var(--input-bg)', 
+                                border: '1px solid var(--input-border)', 
+                                borderRadius: '6px',
+                                color: 'var(--text-primary)',
+                                fontSize: '0.9rem'
+                            }}
+                            placeholder="Enter patient diagnosis..."
                             value={diagnosis}
                             onChange={(e) => setDiagnosis(e.target.value)}
                         />
                     </div>
 
-                    {/* Medication (Rx) Textarea */}
-                    <div className="form-group">
-                        <label className="block text-sm font-medium text-gray-400 mb-1">Rx (Medication)</label>
+                    <div className="input-group">
+                        <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-secondary)', marginBottom: '0.2rem', textTransform: 'uppercase' }}>
+                            Rx (Medication & Dosage)
+                        </label>
                         <textarea
                             required
                             rows="3"
-                            style={{ backgroundColor: 'var(--input-bg)', color: 'var(--input-text)', borderColor: 'var(--input-border)' }}
-                            className="w-full border rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm"
-                            placeholder="e.g. Amoxicillin 500mg - 1 tablet every 8 hours for 7 days"
+                            style={{ 
+                                width: '100%', 
+                                padding: '0.6rem', 
+                                background: 'var(--input-bg)', 
+                                border: '1px solid var(--input-border)', 
+                                borderRadius: '6px',
+                                color: 'var(--text-primary)',
+                                fontSize: '0.9rem',
+                                fontFamily: 'monospace',
+                                lineHeight: '1.4'
+                            }}
+                            placeholder="e.g. Amoxicillin 500mg &#10;- 1 tablet every 8 hours"
                             value={medicine}
                             onChange={(e) => setMedicine(e.target.value)}
                         />
                     </div>
 
-                    {/* Notes Textarea */}
-                    <div className="form-group">
-                        <label className="block text-sm font-medium text-gray-400 mb-1">Notes / Advice</label>
+                    <div className="input-group">
+                        <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-secondary)', marginBottom: '0.2rem', textTransform: 'uppercase' }}>
+                            Additional Advice
+                        </label>
                         <textarea
                             rows="2"
-                            style={{ backgroundColor: 'var(--input-bg)', color: 'var(--input-text)', borderColor: 'var(--input-border)' }}
-                            className="w-full border rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500"
-                            placeholder="e.g. Drink plenty of fluids, rest for 3 days."
+                            style={{ 
+                                width: '100%', 
+                                padding: '0.6rem', 
+                                background: 'var(--input-bg)', 
+                                border: '1px solid var(--input-border)', 
+                                borderRadius: '6px',
+                                color: 'var(--text-primary)',
+                                fontSize: '0.85rem'
+                            }}
+                            placeholder="e.g. Drink plenty of fluids."
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
                         />
                     </div>
 
-                    {/* Submit Button */}
+                    {/* Digital Signature Simulation */}
+                    <div style={{ 
+                        marginTop: '0.5rem', 
+                        padding: '0.75rem', 
+                        background: 'rgba(0,0,0,0.05)', 
+                        borderRadius: '6px',
+                        borderLeft: '4px solid var(--accent-color)'
+                    }}>
+                        <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
+                            Digitally signed by:
+                        </div>
+                        <div style={{ fontFamily: '"Great Vibes", cursive', fontSize: '1.1rem', color: 'var(--accent-color)', marginTop: '0.1rem' }}>
+                            Dr. {formatName(doctorId)}
+                        </div>
+                    </div>
+
                     <button
                         type="submit"
-                        disabled={loading || !selectedPatientId} // Disable if loading or no patient selected
-                        className={`w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white 
-              ${loading || !selectedPatientId ? 'bg-gray-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'}`}
+                        disabled={loading || !selectedPatientId}
+                        style={{ 
+                            width: '100%', 
+                            padding: '0.8rem', 
+                            background: loading ? '#ccc' : 'var(--accent-color)', 
+                            color: 'white', 
+                            border: 'none', 
+                            borderRadius: '8px', 
+                            fontWeight: 'bold',
+                            fontSize: '0.9rem',
+                            cursor: loading ? 'not-allowed' : 'pointer',
+                            boxShadow: '0 4px 10px rgba(56, 189, 248, 0.2)',
+                            transition: 'all 0.3s ease'
+                        }}
                     >
-                        {loading ? 'Processing...' : 'Issue Prescription'}
+                        {loading ? '🔐 Authenticating...' : '🚀 Finalize & Issue'}
                     </button>
                 </form>
             )}
+
+            {/* Close Button */}
+            <button 
+                onClick={onClose}
+                style={{
+                    position: 'absolute',
+                    top: '1rem',
+                    right: '1rem',
+                    background: 'none',
+                    border: 'none',
+                    fontSize: '1.5rem',
+                    color: 'var(--text-secondary)',
+                    cursor: 'pointer'
+                }}
+            >
+                ✕
+            </button>
         </div>
     );
 };

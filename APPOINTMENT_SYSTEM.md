@@ -73,12 +73,17 @@ Patients can view available time slots for a specific doctor.
 ```
 
 ### 4. **Book an Appointment**
-Patients can book appointments with doctors by selecting an available slot.
+Patients can book appointments with doctors by providing the doctor ID and preferred time.
 
-**Endpoint**: `POST /api/patient/book-appointment/{slotId}`
+**Endpoint**: `POST /api/patient/book-appointment`
 **Headers**: `X-User-Id: patient_alpha`
-
-**Example**: `POST /api/patient/book-appointment/1`
+**Request Body**:
+```json
+{
+  "doctorId": 1,
+  "appointmentTime": "2025-06-30T10:30:00"
+}
+```
 
 **Response**:
 ```json
@@ -89,8 +94,8 @@ Patients can book appointments with doctors by selecting an available slot.
     "doctorName": "doctor_micheal",
     "doctorDepartment": "CARDIOLOGY",
     "patientName": "patient_alpha",
-    "fromTime": "2025-06-29T09:00:00",
-    "toTime": "2025-06-29T17:00:00",
+    "fromTime": "2025-06-30T10:30:00",
+    "toTime": "2025-06-30T11:00:00",
     "status": "SCHEDULED"
   }
 }
@@ -177,8 +182,12 @@ run_all.bat
 
 This starts:
 - Backend (Port 8080)
+- Auth Server (Port 9000)
 - Frontend (Port 5173)
 - Analytics (Port 4242)
+- AI Face Service (Port 5050)
+- AI MCP Server (Port 9090)
+- AI MCP Client (Port 8083)
 
 ### Testing the Appointment Flow
 
@@ -226,8 +235,13 @@ curl http://localhost:8080/api/patient/all-doctors/doctor_micheal/slots
 
 ### 4. Book Appointment
 ```bash
-curl -X POST http://localhost:8080/api/patient/book-appointment/1 \
-  -H "X-User-Id: patient_alpha"
+curl -X POST http://localhost:8080/api/patient/book-appointment \
+  -H "Content-Type: application/json" \
+  -H "X-User-Id: patient_alpha" \
+  -d '{
+    "doctorId": 1,
+    "appointmentTime": "2025-06-30T10:30:00"
+  }'
 ```
 
 ## Future Enhancements

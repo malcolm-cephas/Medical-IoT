@@ -1,5 +1,5 @@
 @echo off
-title EMERGENCY RELAUNCH - ALL AI SERVICES
+title EMERGENCY RELAUNCH - ALL SERVICES
 cls
 echo ===================================================
 echo   CLEANING SYSTEMS...
@@ -11,10 +11,10 @@ taskkill /F /IM node.exe /T 2>nul
 
 echo.
 echo ===================================================
-echo   1. STARTING AI ANALYTICS (PORT 4444)
+echo   1. STARTING AI ANALYTICS (PORT 4242)
 echo ===================================================
 cd analytics-python
-start "AI Analytics (4444)" cmd /c "python main.py"
+start "AI Analytics (4242)" cmd /c "python -m uvicorn main:app --reload --port 4242"
 cd ..
 
 echo.
@@ -27,7 +27,31 @@ cd ..
 
 echo.
 echo ===================================================
-echo   3. STARTING MAIN BACKEND (PORT 8080)
+echo   3. STARTING AI FACE SERVICE (PORT 5050)
+echo ===================================================
+cd ai-face-service
+start "AI Face Service (5050)" cmd /c "python app.py"
+cd ..
+
+echo.
+echo ===================================================
+echo   4. STARTING AI MCP SERVER (PORT 9090)
+echo ===================================================
+cd ai/mcp-server
+start "AI MCP Server (9090)" cmd /c "mvn spring-boot:run"
+cd ..
+
+echo.
+echo ===================================================
+echo   5. STARTING AI MCP CLIENT (PORT 8083)
+echo ===================================================
+cd ai/mcp-client
+start "AI MCP Client (8083)" cmd /c "mvn spring-boot:run"
+cd ..
+
+echo.
+echo ===================================================
+echo   6. STARTING MAIN BACKEND (PORT 8080)
 echo ===================================================
 cd backend-spring
 start "Spring Backend (8080)" cmd /c "mvn spring-boot:run"
@@ -35,15 +59,7 @@ cd ..
 
 echo.
 echo ===================================================
-echo   4. STARTING AI MCP SERVICE (PORT 9090)
-echo ===================================================
-cd spring-ai-mcp
-start "AI MCP Server (9090)" cmd /c "mvn spring-boot:run"
-cd ..
-
-echo.
-echo ===================================================
-echo   5. STARTING FRONTEND (PORT 5173)
+echo   7. STARTING FRONTEND (PORT 5173)
 echo ===================================================
 cd frontend-dashboard
 start "React Frontend (5173)" cmd /c "npm run dev"

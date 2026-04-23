@@ -3,6 +3,8 @@ package com.malcolm.medicaliot.controller;
 import com.malcolm.medicaliot.model.MedicalRecord;
 import com.malcolm.medicaliot.service.MedicalRecordService;
 import com.malcolm.medicaliot.service.IPFSService;
+import com.malcolm.medicaliot.service.WatermarkService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
@@ -25,6 +27,9 @@ public class MedicalRecordController {
 
     @Autowired
     private IPFSService ipfsService;
+
+    @Autowired
+    private WatermarkService watermarkService;
 
     /**
      * Upload a clinical record to IPFS. Returns the CID and metadata.
@@ -57,16 +62,28 @@ public class MedicalRecordController {
      * This endpoint hides the local gateway URL from the client frontend for security.
      */
     @GetMapping("/stream/{cid}")
-    public ResponseEntity<byte[]> streamFromIpfs(@PathVariable String cid) {
+    public ResponseEntity<byte[]> streamFromIpfs(@PathVariable String cid, HttpServletRequest request) {
         try {
             ResponseEntity<byte[]> response = ipfsService.downloadFromIpfs(cid);
+            byte[] imageBytes = response.getBody();
+
+            // Watermark embedding logic
+            String doctorId = request.getHeader("X-User-Id");
+            if (doctorId != null && !doctorId.isEmpty() && imageBytes != null) {
+                try {
+                    imageBytes = watermarkService.embedWatermark(imageBytes, doctorId);
+                    log.info("Invisible watermark embedded for user: {}", doctorId);
+                } catch (Exception e) {
+                    log.error("Watermark embedding failed: {}", e.getMessage());
+                }
+            }
             
             // Set headers based on original or default download strategy
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(response.getHeaders().getContentType());
             headers.setCacheControl(CacheControl.noCache().getHeaderValue());
             
-            return new ResponseEntity<>(response.getBody(), headers, HttpStatus.OK);
+            return new ResponseEntity<>(imageBytes, headers, HttpStatus.OK);
         } catch (Exception e) {
             log.error("Error retrieving CID {} from IPFS decentralised storage.", cid);
             return ResponseEntity.notFound().build();

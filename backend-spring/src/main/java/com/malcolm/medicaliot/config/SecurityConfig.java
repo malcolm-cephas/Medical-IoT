@@ -53,6 +53,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll() 
                         .requestMatchers("/api/sensor/**").permitAll()
+                        .requestMatchers("/api/watermark/**").permitAll()
                         .requestMatchers("/ws-vitals/**").permitAll()
                         .requestMatchers("/error").permitAll()
                         .anyRequest().authenticated())

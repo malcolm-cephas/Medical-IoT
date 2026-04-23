@@ -11,7 +11,7 @@ taskkill /F /IM java.exe /T 2>nul
 if %errorlevel% equ 0 (echo    - All Java services stopped.) else (echo    - Java services were not running.)
 
 echo.
-echo [2/3] Stopping Python Processes (Analytics, YOLO AI)...
+echo [2/3] Stopping Python Processes (Analytics, Face AI)...
 taskkill /F /IM python.exe /T 2>nul
 if %errorlevel% equ 0 (echo    - Python AI services stopped.) else (echo    - Python AI was not running.)
 taskkill /F /IM uvicorn.exe /T 2>nul

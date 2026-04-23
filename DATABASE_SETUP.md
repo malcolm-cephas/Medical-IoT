@@ -45,9 +45,11 @@ The application uses Hibernate's `ddl-auto=update` mode, which will:
 The system will automatically create the following tables:
 - `users` - User accounts (doctors, nurses, patients, admin)
 - `sensor_data` - Patient vital signs with timestamps
-- ` - Security audit logs
-`patient_consent` - Consent management records
-- `security_event
+- `security_events` - Security audit logs
+- `patient_consent` - Consent management records
+- `appointments` - Patient appointments
+- `doctor_availability` - Doctor time slots
+
 ## Verification
 
 After starting the application, verify the database:
@@ -55,7 +57,7 @@ After starting the application, verify the database:
 ```sql
 USE medical_iot_db;
 SHOW TABLES;
-SELECT COUNT(*) FROM users;  -- Should show 38 users (35 patients + 1 doctor + 1 nurse + 1 admin)
+SELECT COUNT(*) FROM users;  -- Should show 38+ users (35 patients + doctors + nurses + admin)
 ```
 
 ## Troubleshooting

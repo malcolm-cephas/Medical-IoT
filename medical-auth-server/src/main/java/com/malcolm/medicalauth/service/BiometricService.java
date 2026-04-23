@@ -5,6 +5,13 @@ import com.malcolm.medicalauth.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.core.ParameterizedTypeReference;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Objects;
 
 
 
@@ -65,15 +72,15 @@ public class BiometricService {
             String analyticsUrl = "http://localhost:4242/biometric/verify";
             org.springframework.web.client.RestTemplate restTemplate = new org.springframework.web.client.RestTemplate();
             
-            java.util.Map<String, Object> request = new java.util.HashMap<>();
+            Map<String, Object> request = new HashMap<>();
             request.put("stored_descriptor_b64", storedDescriptor);
             request.put("captured_b64", providedDescriptor);
 
-            @SuppressWarnings("rawtypes")
-            org.springframework.http.ResponseEntity<java.util.Map> response = 
-                restTemplate.postForEntity(analyticsUrl, request, java.util.Map.class);
+            ResponseEntity<Map<String, Object>> response = 
+                restTemplate.exchange(analyticsUrl, Objects.requireNonNull(HttpMethod.POST), new HttpEntity<>(request), 
+                new ParameterizedTypeReference<Map<String, Object>>() {});
             
-            java.util.Map responseBody = response.getBody();
+            Map<String, Object> responseBody = response.getBody();
             if (response.getStatusCode().is2xxSuccessful() && responseBody != null) {
                 Boolean isValid = (Boolean) responseBody.get("valid");
                 return Boolean.TRUE.equals(isValid);

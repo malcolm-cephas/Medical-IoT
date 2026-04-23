@@ -381,8 +381,8 @@ const Dashboard = ({ user, theme, toggleTheme, forceDetail }) => {
         setShowFaceEnroll(false);
     } catch (err) {
         console.error("Enrollment failed", err.response || err);
-        const errorMsg = err.response?.data?.error || err.message;
-        alert("Enrollment Error: " + errorMsg);
+        // Removed alert as requested. Silently close modal on failure.
+        setShowFaceEnroll(false);
     } finally {
         setLoading(false);
     }
@@ -416,57 +416,82 @@ const Dashboard = ({ user, theme, toggleTheme, forceDetail }) => {
 
   return (
     <div className="container">
-      <header>
-        <div className="logo">
-          <h1>Medi<span className="highlight">Secure</span> IoT</h1>
-          <p>Decentralized Health Monitoring</p>
+      <header className="dashboard-header" style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '1.5rem 2rem',
+        background: 'var(--card-bg)',
+        borderBottom: '1px solid var(--card-border)',
+        marginBottom: '2rem',
+        borderRadius: '0 0 20px 20px',
+        boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
+      }}>
+        <div className="logo" style={{ flex: '1' }}>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: '800', margin: 0, letterSpacing: '-1px' }}>
+            Medi<span className="highlight" style={{ color: 'var(--accent-color)' }}>Secure</span>
+          </h1>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>Advanced IoT Monitoring</p>
         </div>
 
-        <div className="user-controls" style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-
+        {/* Action Center - Grouped Buttons */}
+        <div className="action-center" style={{ 
+          display: 'flex', 
+          gap: '0.75rem', 
+          alignItems: 'center', 
+          padding: '0 1.5rem',
+          borderRight: '1px solid var(--card-border)',
+          marginRight: '1.5rem'
+        }}>
           {/* Notification Alert Toggle */}
           {!notificationsEnabled && window.Notification && (
-            <button onClick={requestNotificationPermission} style={{
+            <button onClick={requestNotificationPermission} className="action-btn tip" title="Enable browser alerts" style={{
               background: '#f59e0b', color: 'white', border: 'none',
-              padding: '0.25rem 0.75rem', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem'
+              padding: '0.4rem 0.8rem', borderRadius: '6px', cursor: 'pointer', fontSize: '0.75rem'
             }}>
               🔔 Enable Alerts
             </button>
           )}
 
-          {notificationsEnabled && (
-            <span style={{ fontSize: '0.8rem', color: 'var(--success-color)' }}>🔔 Alerts On</span>
-          )}
-
           {/* Emergency Button (Doctor Only) */}
           {(user.role === 'doctor' || user.role === 'admin') && (
-            <button onClick={handleEmergency} style={{
+            <button onClick={handleEmergency} className="action-btn danger" style={{
               background: 'var(--danger-color)', color: 'white', border: 'none',
-              padding: '0.25rem 0.75rem', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold'
+              padding: '0.4rem 0.8rem', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.75rem'
             }}>
               🚨 BREAK GLASS
             </button>
           )}
 
-          {/* Admin Tools */}
+          {/* Admin Tools Group */}
           {user.role === 'admin' && (
-            <>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button onClick={handleExport} style={{
                 background: 'var(--accent-color)', color: 'white', border: 'none',
-                padding: '0.25rem 0.75rem', borderRadius: '4px', cursor: 'pointer'
-              }}>
-                📥 Export Logs (CSV)
+                padding: '0.4rem 0.8rem', borderRadius: '6px', cursor: 'pointer', fontSize: '0.75rem'
+              }} title="Export System Logs">
+                📥 Logs
               </button>
               <button onClick={togglePerformance} style={{
                 background: '#64748b', color: 'white', border: 'none',
-                padding: '0.25rem 0.75rem', borderRadius: '4px', cursor: 'pointer'
-              }}>
-                📊 Performance
+                padding: '0.4rem 0.8rem', borderRadius: '6px', cursor: 'pointer', fontSize: '0.75rem'
+              }} title="View Performance Metrics">
+                📊 Perf
               </button>
-            </>
+            </div>
           )}
+        </div>
 
-          {/* Theme Toggle */}
+        {/* User Account Section */}
+        <div className="user-profile-section" style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <div className="status-indicator">
+            <span className={`status ${isConnected ? 'connected' : 'disconnected'}`} style={{
+              padding: '0.25rem 0.6rem', fontSize: '0.7rem', borderRadius: '20px'
+            }}>
+              {isConnected ? '● Online' : '○ Offline'}
+            </span>
+          </div>
+
           <div className="theme-switch-wrapper">
             <label className="theme-switch" htmlFor="checkbox">
               <input type="checkbox" id="checkbox" checked={theme === 'light'} onChange={toggleTheme} />
@@ -474,34 +499,31 @@ const Dashboard = ({ user, theme, toggleTheme, forceDetail }) => {
             </label>
           </div>
 
-          <div className="status-indicator">
-            <span className={`status ${isConnected ? 'connected' : 'disconnected'}`}>
-              {isConnected ? 'Connected' : 'Disconnected'}
-            </span>
+          <div className="user-info" style={{ textAlign: 'right', marginRight: '0.5rem' }}>
+            <div style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>{user.username}</div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>{user.role}</div>
           </div>
 
-          <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-            {user.role === 'doctor' ? '👨‍⚕️' : user.role === 'nurse' ? '👩‍⚕️' : '👤'}
-            <strong> {user.username}</strong>
-          </span>
-          <button onClick={handleLogout} className="btn-logout" style={{
-            background: 'transparent',
-            border: '1px solid var(--danger-color)',
-            color: 'var(--danger-color)',
-            padding: '0.25rem 0.75rem',
-            borderRadius: '4px',
-            cursor: 'pointer'
-          }}>Logout</button>
-          
-          {/* Biometric Setup Button */}
-          {user.role === 'doctor' && (
-             <button onClick={() => setShowFaceEnroll(true)} style={{
-                background: 'var(--accent-color)', color: 'white', border: 'none',
-                padding: '0.25rem 0.75rem', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem'
-              }}>
-                📷 Face ID Setup
-              </button>
-          )}
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+             {/* Biometric Setup (Doctor Only) */}
+            {user.role === 'doctor' && (
+              <button onClick={() => setShowFaceEnroll(true)} style={{
+                  background: 'var(--accent-color)', color: 'white', border: 'none',
+                  padding: '0.4rem 0.8rem', borderRadius: '6px', cursor: 'pointer', fontSize: '0.75rem'
+                }}>
+                  📷 Enroll
+                </button>
+            )}
+            <button onClick={handleLogout} className="btn-logout" style={{
+              background: 'rgba(248, 113, 113, 0.1)',
+              border: '1px solid var(--danger-color)',
+              color: 'var(--danger-color)',
+              padding: '0.4rem 0.8rem',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '0.75rem'
+            }}>Logout</button>
+          </div>
         </div>
       </header>
 
@@ -604,7 +626,7 @@ const Dashboard = ({ user, theme, toggleTheme, forceDetail }) => {
                 ✕
               </button>
               <PrescriptionPad
-                doctorId={user.username === 'doctor_micheal' ? 1 : 2} // Temporary mapping, ideally get from user object
+                doctorId={user.username} 
                 selectedPatientId={patientId}
                 onClose={() => setShowPrescriptionPad(false)}
               />

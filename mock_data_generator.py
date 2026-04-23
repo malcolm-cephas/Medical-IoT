@@ -21,6 +21,7 @@ API_URL = f"http://{HOSTNAME}:8080/api/sensor/upload"
 NUM_PATIENTS = 35
 PATIENTS = [f"patient_{i:03d}" for i in range(1, NUM_PATIENTS + 1)] + \
            ["patient_alpha", "patient_beta", "patient_gamma", "alpha", "beta", "gamma"]
+# EXCLUDED: "patient_hardware" is reserved for real Arduino sensor data only.
 
 def generate_vitals(patient_id):
     """Generates realistic but random vitals."""

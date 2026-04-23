@@ -5,6 +5,7 @@ import Dashboard from './components/Dashboard';
 import MobileDashboard from './components/MobileDashboard';
 import Login from './components/Login';
 import Register from './components/Register';
+import WatermarkLab from './components/WatermarkLab';
 
 /**
  * Helper function to retrieve the initial user state from local storage.
@@ -122,6 +123,21 @@ function App() {
             element={
               user ? (
                 <Dashboard user={user} theme={theme} toggleTheme={toggleTheme} forceDetail={true} />
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
+
+          {/* 
+            Traceability Lab:
+            Direct access to watermark forensic tools.
+          */}
+          <Route
+            path="/watermark"
+            element={
+              user ? (
+                <WatermarkLab />
               ) : (
                 <Navigate to="/" replace />
               )

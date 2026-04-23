@@ -1,460 +1,163 @@
-# Medical IoT System - Secure Health Monitoring Platform
+# MediSecure IoT 🏥
+### Secure, Decentralized & AI-Enhanced Health Monitoring Platform
 
-A comprehensive, decentralized health monitoring system built with **Spring Boot**, **React**, and **Python** that implements advanced security features including **Attribute-Based Encryption (ABE)**, **ECDH encryption**, **IPFS storage**, and **blockchain logging**.
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.x-6DB33F?style=for-the-badge&logo=spring-boot)
+![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react)
+![Python](https://img.shields.io/badge/Python-3.8+-3776AB?style=for-the-badge&logo=python)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.x-009688?style=for-the-badge&logo=fastapi)
+![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?style=for-the-badge&logo=mysql)
+![IPFS](https://img.shields.io/badge/IPFS-Decentralized-65C2CB?style=for-the-badge&logo=ipfs)
 
-> **👨‍🔧 For Engineering Review:**
-> - **[System Architecture & Signal Processing](./SYSTEM_ARCHITECTURE.md)**: Detailed breakdown of sensor interfacing, signal conditioning, and communication protocols.
-> - **[Firmware Source Code](./firmware/medical_iot_node)**: Arduino Uno R4 WiFi C++ implementation for MAX30102, DHT22, and AD8232 sensors.
+MediSecure IoT is a comprehensive medical monitoring framework designed to secure patient data from the sensor to the specialist's screen. It integrates real-time vitals tracking with cutting-edge privacy technologies like **Attribute-Based Encryption (ABE)**, **Traceable Invisible Watermarking**, **Face-ID Biometrics**, and **Blockchain Auditing**.
 
-## 🏥 Features
+---
 
-### Core Functionality
-- **Real-time Patient Monitoring**: Track vital signs including Heart Rate, SpO2, Temperature, Humidity, and Blood Pressure
-- **Multi-Role Dashboard**: Separate interfaces for Doctors, Nurses, and Patients
-- **Consent-Based Access Control**: Patients can approve/reject/revoke access requests. (Security: Approval buttons are only accessible to the patient user role).
-- **Doctor-Patient Appointments**: Refined appointment system with recurring weekly office hours and instant confirmation messages.
-- **Ward Statistics**: Aggregated patient metrics and critical alerts for healthcare staff
-- **Enhanced Patient Identity**: Display of full names, ages, and genders alongside patient IDs
-- **System Activity Hub**: Dedicated administrator dashboard for tracking all system happenings (logins, bookings, security events)
-- **Live Charts**: Real-time trends with dual Y-axis support for comprehensive vital monitoring
-- **Security Audit Dashboard**: Real-time visualization of the immutable blockchain ledger and security events
+## 📑 Table of Contents
+1. [Core Features](#-core-features)
+2. [Technology Stack](#-technology-stack)
+3. [Technical Architecture](#-technical-architecture)
+4. [Service Ecosystem](#-service-ecosystem)
+5. [Quick Start](#-quick-start)
+6. [Detailed Installation](#-detailed-installation)
+7. [Security Deep-Dive](#-security-deep-dive)
+8. [API Reference](#-api-reference)
+9. [Testing & Performance](#-testing--performance)
+10. [Documentation & Authors](#-documentation--authors)
 
-### Security & Privacy
-- **Face-ID Biometric 2FA**: AI-powered facial recognition using `face-api.js` for authorizing critical medical actions (Prescriptions, Completions).
-- **Consent-Verified AI Tools**: AI assistants (GPT/Groq) now verify doctor-patient consent before accessing any medical records. (Tool-level security).
-- **Memory-Aware Medical Assistant**: Persistent chat history allowing the AI to remember context across conversations.
-- **Attribute-Based Encryption (ABE)**: Fine-grained access control for patient data
-- **ECDH Image Encryption**: Secure medical image transfer with scrambling
-- **IPFS Integration**: Decentralized storage for encrypted health records
-- **Blockchain Logging**: SHA-256 linked immutable audit trail for all data access events
-- **Emergency Override**: Break-glass access with automatic blockchain logging
-- **Intrusion Detection**: Automated system lockdown on security threats
+---
 
-### Advanced Features
-- **Browser Notifications**: Real-time critical alerts for abnormal vitals
-- **CSV Data Export**: Download patient vital history for offline analysis
-- **Mobile Responsive**: Optimized for tablets and smartphones
-- **Dark/Light Theme**: User-customizable interface
-- **Performance Metrics**: Real-time system benchmarks
+## 🏥 Core Features
 
-## 🔐 Environment Variables (.env)
+### 📡 Real-Time Monitoring
+- **Vitals Tracking**: Heart Rate, SpO2, Temperature, Humidity, and Blood Pressure.
+- **Live Dashboards**: Interactive charts with dual Y-axis support and real-time WebSocket updates.
+- **Critical Alerts**: Browser-based notifications for abnormal vital sign thresholds.
 
-The system uses a central `.env` file in the root directory to store sensitive information. **Never commit your `.env` file to version control.**
+### 🔐 Advanced Security & Privacy
+- **Traceable Watermarking**: Invisible identity embedding in medical images for leak traceability (IEEE TCSVT 2026 inspired).
+- **Face-ID Biometric 2FA**: AI-powered facial recognition for authorizing sensitive medical actions (Prescriptions, Completions).
+- **Consent Control**: Granular patient-driven access management (Approve/Reject/Revoke).
+- **Hybrid Encryption**: ABE for granular vitals access and ECDH for secure image scrambling.
+- **Immutable Ledger**: SHA-256 blockchain audit trail logging every data access event.
 
-| Variable | Description | Default |
-| :--- | :--- | :--- |
-| `DB_PASSWORD` | MySQL Root Password | `<your_password>` |
-| `ADMIN_PASSWORD` | System Admin Password | `<your_password>` |
-| `SSL_KEYSTORE_PASSWORD` | SSL Certificate Password | `<your_password>` |
-| `ANALYTICS_URL` | Analytical Service Endpoint | `http://localhost:4242/analyze` |
+### 🤖 AI Integration (MCP)
+- **Medical Assistant**: Context-aware AI (GPT/Groq) with persistent chat memory.
+- **Access Guards**: AI tools that automatically verify consent before accessing medical records.
+- **Analytics Engine**: Time-series analysis for vital sign trend prediction.
+
+---
 
 ## 🛠️ Technology Stack
 
-### Backend
-- **Spring Boot 3.x** - REST API and business logic
-- **MySQL** - Patient and sensor data storage
-- **Maven** - Dependency management
-
-### Frontend
-- **React 18** - Modern UI framework
-- **Vite** - Fast build tool
-- **Chart.js** - Real-time data visualization
-- **Axios** - HTTP client
-
-### Edge / Hardware
-- **Arduino Uno R4 (WiFi)** - Edge device integration
-- **MAX30102** - Pulse Oximetry & Heart Rate sensor
-- **DHT22** - Temperature & Humidity sensor
-- **AD8232** - ECG Lead monitoring sensor
-- **C++ / Arduino** - Firmware logic
-
-## 📋 Prerequisites
-
-- **Java 17+** (for Spring Boot backend)
-- **Node.js 16+** (for React frontend)
-- **Python 3.8+** (for analytics service)
-- **MySQL 8.0+** (database)
-- **Maven 3.6+** (build tool)
-- **Docker Desktop** (Optional, for containerized deployment)
-
-## 🚀 Quick Start
-
-### ⚡ Automated Setup (Recommended for Windows)
-To automatically install all dependencies and build the project, run the provided PowerShell script as an **Administrator**:
-
-```powershell
-.\setup_environment.ps1
-```
-*This will detect/install Java, Node, Python, Maven, and MySQL, then build all projects.*
-
-### 🛠️ Manual Setup
-
-### 1. Database Setup
-
-Create the MySQL database:
-
-```sql
-CREATE DATABASE medical_iot_db;
-CREATE USER 'root'@'localhost' IDENTIFIED BY '*******';
-GRANT ALL PRIVILEGES ON medical_iot_db.* TO 'root'@'localhost';
-FLUSH PRIVILEGES;
-```
-
-### 2. Microservices Setup
-
-**Terminal 1: Core Backend**
-```bash
-cd backend-spring
-mvn clean install
-mvn spring-boot:run
-```
-*(Runs on http://localhost:8080 - Business Logic)*
-
-**Terminal 2: Auth Server**
-```bash
-cd medical-auth-server
-mvn clean install
-mvn spring-boot:run
-```
-*(Runs on http://localhost:9000 - Dedicated Authentication & Biometric Portal)*
-
-**Terminal 3: AI MCP Server**
-```bash
-cd ai/mcp-server
-mvn clean install
-mvn spring-boot:run
-```
-*(Runs on http://localhost:8082)*
-
-**Terminal 4: AI MCP Client**
-```bash
-cd ai/mcp-client
-mvn clean install
-mvn spring-boot:run
-```
-*(Runs on http://localhost:8083)*
-
-### 3. Analytics Service Setup
-
-```bash
-cd analytics-python
-pip install -r requirements.txt
-uvicorn main:app --reload --port 4242
-```
-
-The analytics service will start on `http://localhost:4242`
-
-### 4. Admin Setup (Auth Port)
-Ensure Port 9000 is open. The frontend communicates with Port 9000 specifically for Biometric Enrollment and JWT generation.
-
-### 4. Frontend Setup
-
-```bash
-cd frontend-dashboard
-npm install
-npm run dev
-```
-
-The frontend will start on `http://localhost:5173`
-
-### 5. Mock Data Generator (Optional)
-
-To simulate patient devices:
-
-```bash
-python mock_data_generator.py
-```
-
-## 🎯 One-Click Startup
-
-Use the provided batch script to start all 5 services simultaneously:
-
-```bash
-run_all.bat
-```
-
-To stop all services:
-
-```bash
-stop_all.bat
-```
-
-## 🐳 Docker Deployment (Recommended)
-
-To run the entire system in isolated containers:
-
-```bash
-docker-compose up --build
-```
-
-This will automatically start:
-- **MySQL Database**: Port 3306
-- **Core Backend**: Port 8080
-- **AI MCP Server**: Port 8082
-- **AI MCP Client**: Port 8083
-- **Analytics Service**: Port 4242
-- **Frontend Dashboard**: Port 5173
-
-## 📱 Mobile App (APK) Generation
-
-The frontend is optimized for mobile conversion using **Capacitor**. To generate an Android APK:
-
-1. **Install Capacitor**:
-   ```bash
-   cd frontend-dashboard
-   npm install @capacitor/core @capacitor/cli
-   npx cap init
-   ```
-2. **Setup Android**:
-   ```bash
-   npm run build
-   npm install @capacitor/android
-   npx cap add android
-   ```
-3. **Build APK**:
-   Open the `android` folder in Android Studio and use **Build > Build APK**.
-   *Link your local backend by updating the API URL to your machine's IP address (e.g. http://192.168.x.x:8080).*
-
-To stop the containers:
-```bash
-docker-compose down
-```
-
-## 👥 Default Users
-
-### Doctor
-- Username: `doctor_micheal`
-- Password: `<your-password>`
-
-### Nurse
-- Username: `nurse_sarah`
-- Password: `<your-password>`
-
-### Patients
-- Username: `patient_001` to `patient_035`
-- Password: `<your-password>`
-
-## 🏗️ System Architecture
-
-The Medical IoT platform follows a **secure microservice architecture** integrating IoT devices, distributed services, and decentralized storage.
+| Layer | Technologies |
+| :--- | :--- |
+| **Frontend** | React 18, Vite, Chart.js, TailwindCSS, SockJS |
+| **Backend** | Spring Boot 3.x, Spring Data JPA, Spring Security |
+| **AI/Analytics** | Python 3.8+, FastAPI, Uvicorn, Face-API.js, HOG/CNN Models |
+| **Data & Security** | MySQL 8.0, IPFS (Kubo), Charm-Crypto (ABE), Blockchain (Java implementation) |
+| **Hardware** | Arduino Uno R4 WiFi, MAX30102, DHT22, AD8232 |
 
 ---
 
-### 1️⃣ System Context
+## 🏗️ Technical Architecture
 
+### 1. System Context & Roles
 ```mermaid
 flowchart TD
+    Patient[Patient] --> Browser[Web UI]
+    Doctor[Doctor] --> Browser
+    Nurse[Nurse] --> Browser
+    Admin[Admin] --> Browser
 
-Patient[Patient]
-Doctor[Doctor]
-Nurse[Nurse]
-Admin[Admin]
+    Sensors[Medical Sensors] --> Arduino[Arduino IoT Node]
+    Arduino --> Platform[MediSecure Platform]
 
-Browser[Web Browser UI]
-
-Sensors[Medical Sensors]
-Arduino[Arduino IoT Node]
-
-Platform[Medical IoT Platform]
-
-IPFS[(IPFS Network)]
-Blockchain[(Blockchain Audit Ledger)]
-
-Patient --> Browser
-Doctor --> Browser
-Nurse --> Browser
-Admin --> Browser
-
-Sensors --> Arduino
-Arduino --> Platform
-
-Browser --> Platform
-
-Platform --> IPFS
-Platform --> Blockchain
+    Browser --> Platform
+    Platform --> IPFS[(IPFS Storage)]
+    Platform --> Blockchain[(Blockchain Ledger)]
 ```
 
----
-
-### 2️⃣ Microservice Architecture
-
+### 2. Microservice Interaction Flow (Ports & Communication)
 ```mermaid
 flowchart LR
+    Frontend[React UI :5173] --> CoreAPI[Spring Backend :8080]
+    Frontend --> AuthServer[Auth Server :9000]
+    Frontend --> MCPClient[MCP Client :8083]
 
-Frontend[React Frontend :5173]
-
-CoreAPI[Spring Boot Core Backend :8080]
-AuthServer[Dedicated Auth Server :9000]
-
-Analytics[Python FastAPI Analytics :4242]
-
-MCPClient[MCP Client :8083]
-MCPServer[MCP Server :8082]
-
-MySQL[(MySQL Database)]
-H2[(H2 Auth DB)]
-IPFS[(IPFS Storage)]
-Ledger[(Blockchain Ledger)]
-
-Frontend --> CoreAPI
-Frontend --> AuthServer
-Frontend --> MCPClient
-
-AuthServer --> H2
-CoreAPI --> MySQL
-CoreAPI --> Analytics
-CoreAPI --> IPFS
-CoreAPI --> Ledger
-
-MCPClient --> MCPServer
-MCPClient --> MySQL
-MCPServer --> CoreAPI
-MCPServer --> MySQL
-MCPServer --> AuthServer
+    CoreAPI --> Analytics[Python Analytics :4242]
+    CoreAPI --> IPFS[(IPFS)]
+    
+    MCPClient --> MCPServer[MCP Server :9090]
+    MCPServer --> CoreAPI
+    MCPServer --> FaceService[Face AI :5050]
 ```
 
----
-
-### 3️⃣ Backend Architecture
-
+### 3. Backend Service Internal Architecture
 ```mermaid
 flowchart TD
-
-SensorController
-ConsentController
-AppointmentController
-DoctorAvailabilityController
-EmergencyOverrideController
-
-AppointmentService
-DoctorAvailabilityService
-UserService
-IPFSService
-BlockchainService
-AnalyticsService
-LockdownService
-
-SensorRepository
-ConsentRepository
-AppointmentRepository
-DoctorAvailabilityRepository
-UserRepository
-
-MySQL[(MySQL)]
-
-SensorController --> AnalyticsService
-SensorController --> UserService
-
-ConsentController --> BlockchainService
-ConsentController --> UserService
-
-AppointmentController --> AppointmentService
-DoctorAvailabilityController --> DoctorAvailabilityService
-
-AppointmentService --> AppointmentRepository
-DoctorAvailabilityService --> DoctorAvailabilityRepository
-UserService --> UserRepository
-
-SensorRepository --> MySQL
-ConsentRepository --> MySQL
-AppointmentRepository --> MySQL
-DoctorAvailabilityRepository --> MySQL
-UserRepository --> MySQL
+    SensorController --> AnalyticsService
+    SensorController --> UserService
+    ConsentController --> BlockchainService
+    ConsentController --> UserService
+    AppointmentController --> AppointmentService
+    DoctorAvailabilityController --> DoctorAvailabilityService
+    
+    AppointmentService --> AppointmentRepository
+    DoctorAvailabilityService --> DoctorAvailabilityRepository
+    UserService --> UserRepository
+    
+    SensorRepository --> MySQL[(MySQL)]
+    ConsentRepository --> MySQL
+    AppointmentRepository --> MySQL
+    DoctorAvailabilityRepository --> MySQL
+    UserRepository --> MySQL
 ```
 
----
-
-### 4️⃣ Authentication Architecture
-
+### 4. Dedicated Authentication & 2FA Flow
 ```mermaid
 flowchart TD
-
-AuthController
-SecurityController
-
-JwtAuthenticationFilter
-JwtService
-CustomUserDetailsService
-SecurityConfig
-
-UserRepository
-
-MySQL[(MySQL)]
-
-AuthController --> JwtService
-AuthController --> CustomUserDetailsService
-
-JwtAuthenticationFilter --> JwtService
-JwtAuthenticationFilter --> CustomUserDetailsService
-
-CustomUserDetailsService --> UserRepository
-
-UserRepository --> MySQL
+    AuthController --> JwtService
+    AuthController --> CustomUserDetailsService
+    JwtAuthenticationFilter --> JwtService
+    JwtAuthenticationFilter --> CustomUserDetailsService
+    CustomUserDetailsService --> UserRepository[(MySQL)]
 ```
 
----
-
-### 5️⃣ Real-Time Vitals Data Flow
-
+### 5. Real-Time Vitals Propagation (WebSocket)
 ```mermaid
 sequenceDiagram
-
-participant Device as Arduino IoT Device
-participant Backend as Core Backend
-participant DB as MySQL
-participant WS as WebSocket
-participant UI as React Dashboard
-
-Device->>Backend: POST /api/sensor/upload
-Backend->>DB: Store SensorData
-Backend->>WS: Broadcast vitals update
-WS->>UI: Push realtime vitals
-UI->>UI: Update charts and alerts
+    participant Device as Arduino IoT Device
+    participant Backend as Core Backend
+    participant DB as MySQL
+    participant WS as WebSocket
+    participant UI as React Dashboard
+    
+    Device->>Backend: POST /api/sensor/upload
+    Backend->>DB: Store SensorData
+    Backend->>WS: Broadcast vitals update
+    WS->>UI: Push realtime vitals
+    UI->>UI: Update charts and alerts
 ```
 
----
-
-### 6️⃣ Deployment Architecture
-
+### 6. Deployment Topology (Docker Containers)
 ```mermaid
 flowchart TD
-
-Browser[User Browser]
-
-subgraph Docker Host
-Frontend[Frontend Container :5173]
-CoreBackend[Backend Container :8080]
-AuthServer[Auth Container :8081]
-Analytics[Analytics Container :4242]
-MCPClient[MCP Client :8083]
-MCPServer[MCP Server :8082]
-MySQL[(MySQL Container :3306)]
-end
-
-Browser --> Frontend
-
-Frontend --> CoreBackend
-Frontend --> MCPClient
-
-CoreBackend --> MySQL
-CoreBackend --> Analytics
-
-MCPClient --> MCPServer
-MCPServer --> CoreBackend
+    Browser[User Browser] --> Frontend[Frontend :5173]
+    Frontend --> CoreBackend[Backend :8080]
+    Frontend --> MCPClient[MCP Client :8083]
+    CoreBackend --> MySQL[(MySQL :3306)]
+    CoreBackend --> Analytics[Analytics :4242]
+    MCPClient --> MCPServer[MCP Server :9090]
+    MCPServer --> CoreBackend
 ```
 
-
-
-### 7️⃣ Overall Architecture
-## System Architecture Diagram
-
+### 7. Comprehensive Overall Architecture
 ```mermaid
 graph TB
     subgraph "Client Layer"
         WEB["Web Browser<br/>React + Vite"]
         MOBILE["Mobile Device<br/>Responsive UI"]
     end
-
     subgraph "Frontend - Port 5173"
         DASHBOARD["Dashboard Component"]
         VITALS["Vitals Monitor"]
@@ -462,341 +165,175 @@ graph TB
         IMAGES["Image Transfer"]
         APPT["Appointments System"]
     end
-
     subgraph "Backend - Port 8080"
         API["Spring Boot REST API"]
-        
-        subgraph "Controllers"
-            AUTH["Auth Controller"]
-            SENSOR["Sensor Controller"]
-            CONS["Consent Controller"]
-            DOC["Doctor Controller"]
-            PAT["Patient Controller"]
-        end
-        
-        subgraph "Services"
-            USERSVC["User Service"]
-            SENSVC["Sensor Service"]
-            CONSVC["Consent Service"]
-            DOCAVSVC["Availability Service"]
-            APPTSVC["Appointment Service"]
-            IPFSSVC["IPFS Service"]
-            BLOCKSVC["Blockchain Service"]
-            LOCKSVC["Lockdown Service"]
-        end
-        
-        subgraph "Security"
-            SECCONF["Security Config"]
-            ABE["ABE Encryption"]
-            ECDH["ECDH Encryption"]
-        end
+        USERSVC["User Service"]
+        SENSVC["Sensor Service"]
+        CONSVC["Consent Service"]
+        IPFSSVC["IPFS Service"]
+        BLOCKSVC["Blockchain Service"]
+        ABE["ABE Encryption"]
+        ECDH["ECDH Encryption"]
     end
-    
     subgraph "AI System"
-        MCPCLIENT["MCP Client - Port 8083<br/>LLM Router & Session Memory"]
-        MCPSERVER["MCP Server - Port 8082<br/>Medical Tools & Access Guard"]
+        MCPCLIENT["MCP Client - Port 8083"]
+        MCPSERVER["MCP Server - Port 9090"]
+        FACE["Face AI - Port 5050"]
     end
-
     subgraph "Analytics - Port 4242"
         FASTAPI["FastAPI Service"]
         CHARM["Charm-Crypto ABE"]
-        IMGPROC["Image Processing"]
     end
-
     subgraph "Data Layer"
-        MYSQL["MySQL Database<br/>medical_iot_db"]
-        IPFS["IPFS Storage<br/>Decentralized"]
-        BLOCKCHAIN["Blockchain Ledger<br/>Audit Trail"]
-    end
-
-    subgraph "Database Tables"
-        USERS["users<br/>(id, username, password, role<br/>fullName, age, gender, dept)"]
-        SENSORS["sensor_data"]
-        CONSENTS["consent_records"]
-        SECURITY["security_events"]
-        DOCAVAIL["doctor_availability"]
-        APPOINTMENTS["appointments"]
-        MEMORY["chat_memory<br/>(session metadata)"]
-    end
-
-    subgraph "External Systems"
-        WEBSOCKET["WebSocket<br/>Real-time Updates"]
-        NOTIF["Browser Notifications"]
+        MYSQL["MySQL Database"]
+        IPFS["IPFS Storage"]
+        BLOCKCHAIN["Blockchain Ledger"]
     end
 
     WEB --> DASHBOARD
-    MOBILE --> DASHBOARD
-    
     DASHBOARD --> VITALS
-    DASHBOARD --> CONSENT
-    DASHBOARD --> IMAGES
-    DASHBOARD --> APPT
-    
     VITALS --> API
-    CONSENT --> API
-    IMAGES --> API
-    APPT --> API
-    
-    API --> AUTH
-    API --> SENSOR
-    API --> CONS
-    API --> DOC
-    API --> PAT
-    
-    AUTH --> USERSVC
-    SENSOR --> SENSVC
-    CONS --> CONSVC
-    DOC --> DOCAVSVC
-    DOC --> APPTSVC
-    PAT --> APPTSVC
-    
+    API --> USERSVC
+    API --> SENSVC
     SENSVC --> ABE
-    IMAGES -.-> ECDH
-    CONSVC --> BLOCKSVC
-    APPTSVC --> BLOCKSVC
-    
-    USERSVC --> MYSQL
-    SENSVC --> MYSQL
-    CONSVC --> MYSQL
-    DOCAVSVC --> MYSQL
-    APPTSVC --> MYSQL
-    LOCKSVC --> MYSQL
-    
     ABE --> FASTAPI
-    ECDH --> FASTAPI
     FASTAPI --> CHARM
-    FASTAPI --> IMGPROC
-    
     IPFSSVC --> IPFS
     BLOCKSVC --> BLOCKCHAIN
-    
-    MYSQL --> USERS
-    MYSQL --> SENSORS
-    MYSQL --> CONSENTS
-    MYSQL --> SECURITY
-    MYSQL --> DOCAVAIL
-    MYSQL --> APPOINTMENTS
-    MYSQL --> MEMORY
-    
-    SENSVC -.-> WEBSOCKET
-    WEBSOCKET -.-> DASHBOARD
-    DASHBOARD -.-> NOTIF
+    USERSVC --> MYSQL
+    MCPCLIENT --> MCPSERVER
+    MCPSERVER --> API
+    MCPSERVER --> FACE
 ```
 
 ---
-### Key Components
 
-**Frontend (React)**
-- Multi-role dashboards
-- Real-time patient monitoring
-- Consent management
-- Appointment scheduling
-- Secure image transfer
+## 🌐 Service Ecosystem
 
-**Backend (Spring Boot)**
-- Sensor data ingestion
-- Consent enforcement
-- Appointment system
-- Policy engine
-- Security event monitoring
+| Service | Port | Directory | Description |
+| :--- | :--- | :--- | :--- |
+| **Frontend** | `5173` | `frontend-dashboard` | React Dashboard (Vite) |
+| **Main Backend** | `8080` | `backend-spring` | Business Logic & Data Ingestion |
+| **Auth Server** | `9000` | `medical-auth-server` | JWT & Biometric Portal |
+| **MCP Server** | `9090` | `ai/mcp-server` | Medical AI Tools |
+| **MCP Client** | `8083` | `ai/mcp-client` | LLM Router & Memory |
+| **Analytics** | `4242` | `analytics-python` | ABE & Image Processing |
+| **Face AI** | `5050` | `ai-face-service` | Biometric Models |
 
-**Analytics Service (Python)**
-- Attribute-Based Encryption (ABE)
-- ECDH image encryption
-- Image processing
+---
 
-**Data Layer**
-- MySQL database
-- IPFS decentralized storage
-- Blockchain audit ledger
+## 🚀 Quick Start
 
-**Edge Layer**
-- Arduino Uno R4 WiFi
-- MAX30102 pulse oximeter
-- DHT22 environmental sensor
-- AD8232 ECG sensor
+### ⚡ Automated Startup (Windows)
+Run the master batch script to launch all 7 services in separate terminals:
+```bash
+run_all.bat
+```
+To restart/clean the system: `relaunch_all.bat` | To stop: `stop_all.bat`
 
-### Key Components:
+### 🐳 Docker Deployment
+```bash
+docker-compose up --build
+```
 
-- **Frontend (React)**: Multi-tab dashboard with real-time monitoring
-- **Backend (Spring Boot)**: RESTful API with comprehensive security
-- **Analytics (Python)**: ABE encryption and image processing
-- **Database (MySQL)**: Persistent storage for all entities
-- **IPFS**: Decentralized storage for encrypted records
-- **Blockchain**: Immutable audit trail for compliance
+---
 
+## 🛠️ Detailed Installation
 
+### 1. Environment Setup
+Create a `.env` file in the root directory:
+```env
+DB_PASSWORD=your_mysql_password
+ADMIN_PASSWORD=your_admin_password
+SSL_KEYSTORE_PASSWORD=your_ssl_password
+```
 
-## 🔐 Security Features
+### 2. Database Initialization
+```sql
+CREATE DATABASE medical_iot_db;
+CREATE USER 'root'@'localhost' IDENTIFIED BY 'your_password';
+GRANT ALL PRIVILEGES ON medical_iot_db.* TO 'root'@'localhost';
+```
 
-### Consent Management
-- Patients control who can access their data
-- Three-state consent: Pending, Approved, Rejected
-- Revocation capability for approved access
+### 3. Service Manual Launch (Sequence)
+1.  **Analytics**: `cd analytics-python && pip install -r requirements.txt && uvicorn main:app --port 4242`
+2.  **Auth Server**: `cd medical-auth-server && mvn spring-boot:run`
+3.  **MCP Server**: `cd ai/mcp-server && mvn spring-boot:run`
+4.  **MCP Client**: `cd ai/mcp-client && mvn spring-boot:run`
+5.  **Face AI**: `cd ai-face-service && python app.py`
+6.  **Core Backend**: `cd backend-spring && mvn spring-boot:run`
+7.  **Frontend**: `cd frontend-dashboard && npm install && npm run dev`
 
-### Encryption Layers
-1. **Transport**: HTTPS/TLS
-2. **Application**: ABE for data, ECDH for images
-3. **Storage**: Encrypted data in IPFS
+---
 
-### Audit Trail
-- All access events logged to blockchain
-- Emergency overrides tracked
-- Intrusion attempts recorded
+## 🛡️ Security Deep-Dive
 
-## 📱 API Endpoints
+### Traceable Watermark Feature
+**Inspired by:** *"Building an Invisible Shield for Medical Images"* — IEEE TCSVT 2026.
+*   **Problem**: ECDH secures transmission, but doesn't prevent authorized doctors from leaking images.
+*   **Solution**: Every image download via `/api/medical-records/stream/{cid}` is automatically embedded with a hidden 64-bit fingerprint of the doctor's identity using LSB steganography.
+*   **Forensics**: Admins can use `/api/watermark/decode` on any leaked image to identify the exact source.
 
-### Authentication
-- `POST /api/auth/login` - User login
+### Face-ID Biometric 2FA
+*   Sensitive actions (e.g., issuing prescriptions) trigger a biometric challenge.
+*   Uses HOG/CNN models to match the live capture against the Auth Server's stored identity.
 
-### Sensor Data
-- `POST /api/sensor/upload` - Upload patient vitals
-- `GET /api/sensor/history/{patientId}` - Get patient history
+### Attribute-Based Encryption (ABE)
+*   Vital signs are encrypted using attributes (e.g., `ROLE:DOCTOR`, `DEPT:CARDIOLOGY`).
+*   Only users with matching keys can decrypt and view specific patient parameters.
 
-### Consent Management
-- `POST /api/consent/request` - Request patient data access
-- `POST /api/consent/respond` - Approve/reject access request
-- `GET /api/consent/patient/{patientId}` - Get all consent requests
-- `GET /api/consent/check` - Check consent status
+---
 
-### Patient Management
-- `GET /api/patients` - List all patients (with pagination)
+## 📱 API Reference (Partial)
 
-### Appointment System (NEW)
+### 🩺 Appointments
+- `POST /api/doctor/set-availability` - Configure office hours.
+- `GET /api/patient/all-doctors/{id}/slots` - View available times.
+- `POST /api/patient/book-appointment` - Book a session (JSON body).
 
-#### Doctor Endpoints
-- `POST /api/doctor/set-availability` - Set recurring weekly office hours (e.g., MONDAY 10:00-18:00)
-- `GET /api/doctor/{doctorId}/slots` - Get office hours for a doctor
-- `GET /api/doctor/appointments` - Get all appointments for a doctor
-- `POST /api/doctor/appointments/{appointmentId}/complete` - Mark appointment as completed
-- `POST /api/doctor/slots/{slotId}/cancel` - Remove an office hour entry
+### 🤖 AI Assistant
+- `POST /api/chat-memory/start` - Initialize new AI session.
+- `POST /api/chat-memory/{chatId}` - Chat with persistent context.
 
-#### Patient Endpoints
-- `GET /api/patient/all-doctors` - Get list of all doctors
-- `GET /api/patient/all-doctors/{doctorId}/slots` - View doctor office hours
-- `POST /api/patient/book-appointment` - Book an appointment for a specific date/time
-- `GET /api/patient/appointments` - Get all patient appointments
-- `POST /api/patient/appointments/{appointmentId}/cancel` - Cancel an appointment
+### 🧪 Watermarking
+- `POST /api/watermark/embed` - Manual watermark embedding.
+- `POST /api/watermark/verify` - Confirm doctor identity in image.
 
-### Chat Memory (NEW)
-- `GET /api/chat-memory` - Get list of past conversations for the user
-- `GET /api/chat-memory/{chatId}` - Retrieve full message history for a specific session
-- `POST /api/chat-memory/start` - Initialize a new conversation with AI-generated title
-- `POST /api/chat-memory/{chatId}` - Continue a session with context-aware memory
+---
 
-### Emergency
-- `POST /api/emergency/override` - Break-glass access
+## 🧪 Testing & Performance
 
-### Export
-- `GET /api/export/logs/csv` - Download audit logs
-
-## 🎨 Screenshots
-
-### Doctor Dashboard
-- Ward-wide statistics
-- Patient vital monitoring
-- Consent request management
-
-### Patient Dashboard
-- Personal vital trends
-- Consent management interface
-- Secure image transfer
-
-## 🧪 Testing
-
-### Run Mock Data Generator
-Simulates 35 patient devices sending real-time vitals:
-
+### Mock Data Generation
+Simulate 35 IoT devices sending real-time data:
 ```bash
 python mock_data_generator.py
 ```
 
-### Test Consent Flow
-1. Login as doctor → Request access to patient
-2. Login as patient → Approve/reject request
-3. Login as doctor → View patient data (if approved)
+### Performance Benchmarks
+- **Encryption**: ~50ms avg
+- **API Latency**: ~30ms avg
+- **Throughput**: 20+ req/sec (Concurrent IoT Streams)
 
-### Test Appointment System (Refactored)
-1. **Doctor sets office hours**:
-   ```bash
-   curl -X POST http://localhost:8080/api/doctor/set-availability \
-     -H "Content-Type: application/json" \
-     -H "X-User-Id: doctor_micheal" \
-     -d '{"dayOfWeek": "MONDAY", "startTime": "10:00:00", "endTime": "18:00:00"}'
-   ```
-
-2. **Patient views doctor hours**:
-   ```bash
-   curl http://localhost:8080/api/patient/all-doctors/doctor_micheal/slots
-   ```
-
-3. **Patient books appointment**:
-   ```bash
-   curl -X POST http://localhost:8080/api/patient/book-appointment \
-     -H "Content-Type: application/json" \
-     -H "X-User-Id: patient_001" \
-     -d '{"doctorId": 1, "appointmentTime": "2025-06-30T10:30:00"}'
-   ```
-
-4. **Doctor completes appointment**:
-   ```bash
-   curl -X POST http://localhost:8080/api/doctor/appointments/1/complete \
-     -H "X-User-Id: doctor_micheal"
-   ```
-
-## 📈 Performance
-
-- **Encryption**: ~50ms average
-- **Decryption**: ~45ms average
-- **API Latency**: ~30ms average
-- **Throughput**: 20+ requests/second
-
-## 🤝 Contributing
-
-This is an academic project for demonstration purposes. All rights reserved. See the [LICENSE](./LICENSE) file for more information.
-
-## 👨‍💻 Authors (Project Team)
-
-*Malcolm Cephas*
-- GitHub: [@malcolm-cephas](https://github.com/malcolm-cephas)
-  
-*Shalini Sinha*
-- GitHub: [@Shalini-sinha-codes](https://github.com/shalini-sinha-codes)
-  
-*A B Vishvajeeth*
-- GitHub: [@ABVishvajeeth](https://github.com/ABVishvajeeth) 
-
-## 🙏 Acknowledgments
-
-- Built as part of Major Project at DSCE
-- Uses Charm-Crypto library for ABE implementation
-- Inspired by modern healthcare security requirements
-
-### AI & Architecture References
-- [SpringAI_Test](https://github.com/malcolm-cephas/SpringAI_Test) - MCP Client/Server Architecture
-- [opencode-antigravity-autopilot](https://github.com/Gooseware/opencode-antigravity-autopilot) - Model Switching Inspiration
-- [Building an AI Chat with Memory (Context) using Spring AI and Angular](https://loiane.com/2025/10/building-ai-chat-with-memory-using-spring-ai-and-angular/)
-- [Chat Memory in Spring AI](https://www.baeldung.com/spring-ai-chat-memory)
-- [Securing MCP Servers with Spring AI](https://spring.io/blog/2025/09/30/spring-ai-mcp-server-security)
-- [Securing Spring AI MCP Servers With OAuth2](https://www.baeldung.com/spring-ai-mcp-servers-oauth2)
-  
 ---
 
-## 📚 Documentation
+## 👨‍💻 Authors & Documentation
 
-- **[APPOINTMENT_SYSTEM.md](./APPOINTMENT_SYSTEM.md)** - Complete guide for the appointment scheduling system inspired from doctor patient api (includes Quick Start)
-- **[DATABASE_SETUP.md](./DATABASE_SETUP.md)** - Database configuration and setup instructions
-- **[MULTI_DEVICE_ACCESS.md](./MULTI_DEVICE_ACCESS.md)** - Guide for accessing the system from multiple devices
-- **[Doctor-Patient-API](https://github.com/MarcusFranklin-GIT/doctor-patient-api)** - Original NestJS repository (adapted for this project)
+### Project Team
+- **Malcolm Cephas** ([@malcolm-cephas](https://github.com/malcolm-cephas))
+- **Shalini Sinha** ([@Shalini-sinha-codes](https://github.com/shalini-sinha-codes))
+- **A B Vishvajeeth** ([@ABVishvajeeth](https://github.com/ABVishvajeeth))
+
+### Extended Guides
+- **[APPOINTMENT_SYSTEM.md](./APPOINTMENT_SYSTEM.md)** - Scheduling logic & flow.
+- **[DATABASE_SETUP.md](./DATABASE_SETUP.md)** - Schema details & user seeding.
+- **[SYSTEM_ARCHITECTURE.md](./SYSTEM_ARCHITECTURE.md)** - Signal processing & engineering.
+- **[MULTI_DEVICE_ACCESS.md](./MULTI_DEVICE_ACCESS.md)** - Network configuration guide.
 
 ---
 
 ## 📄 License
-
-Copyright (c) 2026 Malcolm Cephas, Shalini Sinha, A B Vishvajeeth. All Rights Reserved.
-
-This project is proprietary and for academic review only. Unauthorized use or distribution is prohibited.
+Copyright © 2026 Project Team. All Rights Reserved. 
+*Academic prototype - Production use requires HIPAA/GDPR compliance auditing.*
 
 ---
-
-**⚠️ Note**: This is a prototype system. For production use, additional security hardening, compliance certifications (HIPAA, GDPR), and professional security audits are required.
+> **👨‍🔧 Engineering Note**: Firmware sources for Arduino IoT nodes are located in the `/firmware` directory.

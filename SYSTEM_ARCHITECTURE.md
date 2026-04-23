@@ -75,7 +75,13 @@ The Backend and Analytics Engine (`analytics-python`) perform the heavy lifting 
 2.  **Fall Detection Algorithm**:
     *   Calculates `Total Acceleration Vector (SVM) = sqrt(ax^2 + ay^2 + az^2)`.
     *   If `SVM > Threshold` (Impact) AND `Orientation Change > 60 deg`, a **Fall Alert** is triggered.
-3.  **Predictive Alerts**: Time-series analysis to predict vital sign trends.
+3.  **Face Biometrics (AI Face Service)**:
+    *   Uses HOG (Histogram of Oriented Gradients) and CNN-based models for 128-d facial embedding extraction.
+    *   Enforces 2FA for sensitive medical actions (Prescriptions, completions).
+4.  **AI Assistant (MCP - Model Context Protocol)**:
+    *   **MCP Server**: Exposes medical tools and database access with strict consent guards.
+    *   **MCP Client**: Manages LLM routing (GPT-4/Groq) and maintains persistent chat memory.
+5.  **Predictive Alerts**: Time-series analysis to predict vital sign trends.
 
 ---
 

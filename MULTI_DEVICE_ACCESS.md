@@ -8,6 +8,8 @@ This document outlines the changes made to enable secure multi-device access for
 - **Spring Boot Backend**: Configured to listen on `0.0.0.0` (all interfaces) instead of `localhost`. This allows devices on the same Wi-Fi network to reach the API via the host machine's local IP address.
 - **Frontend (Vite)**: Configured with `server.host: '0.0.0.0'` and `server.port: 5173`.
 - **Python Analytics**: Set to listen on `0.0.0.0` on port `4242`.
+- **AI Face Service**: Runs on `0.0.0.0:5050`.
+- **AI MCP Server/Client**: Ports `9090` and `8083` configured for network access.
 
 ### 2. Dynamic API Connectivity
 - Created `frontend-dashboard/src/config.js` to dynamically resolve the backend and analytics IP addresses based on the current URL (`window.location.hostname`).

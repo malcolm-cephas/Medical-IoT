@@ -137,6 +137,33 @@ public class DataInitializer {
                 }
             }
 
+            // 5b. Create Dedicated Hardware-Only Patient
+            User hardwarePatient = userRepository.findByUsername("patient_hardware").orElse(null);
+            if (hardwarePatient == null) {
+                hardwarePatient = new User(null, "patient_hardware", encoder.encode("password"), "PATIENT", "GENERAL", "patient");
+            }
+            
+            // Force update these fields to ensure the name change takes effect
+            hardwarePatient.setFullName("Alex Johnson");
+            hardwarePatient.setAge(45);
+            hardwarePatient.setGender("M");
+            hardwarePatient.setWardName("IoT Research Lab");
+            hardwarePatient.setWardNumber(404);
+            hardwarePatient.setReasonOfAdmission("Hardware Integration Testing");
+            userRepository.save(hardwarePatient);
+
+            if (sensorDataRepository.findByPatientIdOrderByTimestampAsc("patient_hardware").isEmpty()) {
+                SensorData data = new SensorData();
+                data.setPatientId("patient_hardware");
+                data.setHeartRate(0); // 0 indicates waiting for hardware signal
+                data.setSpo2(0);
+                data.setTemperature(0.0f);
+                data.setHumidity(0.0f);
+                data.setConditionStatus("STABLE");
+                data.setClinicalDiagnosis("Awaiting Real-Time Sensor Input");
+                sensorDataRepository.save(data);
+            }
+
             // 6. Create Requested Doctors
             createDoctor(userRepository, availabilityRepository, encoder,
                     "dr_smith", "Dr. Smith", "CARDIOLOGY",
